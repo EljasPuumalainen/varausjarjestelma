@@ -4,15 +4,14 @@ import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
-import javafx.scene.control.Button;
-
 
 
 public class Kayttoliittyma extends Application {
@@ -26,6 +25,9 @@ public class Kayttoliittyma extends Application {
     private Button mokkienHallinta = new Button("Mökkien hallinta");
     private Button alueidenHallinta = new Button("Alueiden hallinta");
     private Button palveluidenHallinta = new Button("Palveluiden hallinta");
+    private Button lisaaMokki = new Button("Lisää mökki");
+    private Button poistaMokki = new Button("Poista mökki");
+    private Button muokkaaMokkeja = new Button("Muokkaa tietoja");
 
     @Override
     public void start(Stage primaryStage) {
@@ -46,12 +48,16 @@ public class Kayttoliittyma extends Application {
         pane.setTop(text);
         pane.setCenter(getHbox());
 
-
+        //Varausten hallinta ikkuna
         varaustenHallinta.setOnAction(e -> {
             //primaryStage.close();
             katsoVaraukset();
         });
 
+        //Mokkien hallinta ikkua
+        mokkienHallinta.setOnMouseClicked(e -> {
+            mokkienHallinta();
+        });
     }
 
     /**
@@ -92,6 +98,70 @@ public class Kayttoliittyma extends Application {
 
         varausStage.setScene(varausIkkuna);
         varausStage.show();
+        varausStage.setTitle("Varausten hallinta");
     }
 
+    /**
+     * Mökkien hallinta stage ja sen ominaisuudet/toiminnot
+     */
+    public void mokkienHallinta() {
+        // Luo uusi BorderPane
+        BorderPane pane = new BorderPane();
+        TextArea tiedot = new TextArea();
+        ListView<String> lista = new ListView<>();
+
+        // Luo uusi Stage-olio
+        Stage mokkienHallinta = new Stage();
+        Scene kehys = new Scene(pane);
+
+        // Luo VBox painikkeille ja aseta ne vasemmalle
+        VBox painikeVBox = new VBox(15);
+        painikeVBox.setPadding(new Insets(15, 15, 15, 15));
+        painikeVBox.getChildren().addAll(lisaaMokki, poistaMokki, muokkaaMokkeja);
+        pane.setRight(painikeVBox);
+
+        // Aseta TextArea ja ListView BorderPaneen
+        pane.setCenter(tiedot);
+        pane.setLeft(lista);
+
+        // Aseta uusi Scene Stageen ja näytä ikkuna
+        mokkienHallinta.setScene(kehys);
+        mokkienHallinta.show();
+        mokkienHallinta.setTitle("Mökkien hallinta");
+
+        lisaaMokki.setOnMouseClicked(e -> {
+            Stage lisaaMokkiStage = new Stage();
+            GridPane lisaaMokkiPane = new GridPane();
+            Scene lisaaMokkiScene = new Scene(lisaaMokkiPane, 300,300);
+            lisaaMokkiStage.setScene(lisaaMokkiScene);
+            lisaaMokkiStage.show();
+            lisaaMokkiPane.setVgap(5);
+
+            lisaaMokkiPane.add(new Label("Mökin nimi: "), 0,0);
+            lisaaMokkiPane.add(new Label("Sijainti:"), 0, 1);
+            lisaaMokkiPane.add(new Label("Hinta: "), 0, 2);
+
+            TextField nimi = new TextField();
+            TextField sijainti = new TextField();
+            TextField hinta = new TextField();
+
+            Button lisaaMokki = new Button("Lisää mökki");
+
+            //Alueiden combobox
+            ComboBox<String> alueComboBox = new ComboBox<>();
+            alueComboBox.getItems().addAll("Ruka", "Tahko", "Ylläs");
+
+            lisaaMokkiPane.add(new Label("Alue"), 0, 3);
+            lisaaMokkiPane.add(alueComboBox, 1, 3);
+
+            lisaaMokkiPane.add(nimi, 1,0);
+            lisaaMokkiPane.add(sijainti, 1,1);
+            lisaaMokkiPane.add(hinta, 1,2);
+            lisaaMokkiPane.add(lisaaMokki, 1,4);
+
+            lisaaMokkiPane.setAlignment(Pos.CENTER);
+            lisaaMokkiStage.setTitle("Lisää mökki");
+
+        });
+    }
 }
