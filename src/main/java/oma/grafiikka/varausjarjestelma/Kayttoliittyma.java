@@ -4,6 +4,8 @@ import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.ListView;
+import javafx.scene.control.TextArea;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.text.Font;
@@ -18,6 +20,12 @@ public class Kayttoliittyma extends Application {
     public static void main(String[] args) {
         launch(args);
     }
+
+    private Button varaustenHallinta = new Button("Varausten hallinta");
+    private Button asikkaidenHallinta = new Button("Asiakkaiden hallinta");
+    private Button mokkienHallinta = new Button("Mökkien hallinta");
+    private Button alueidenHallinta = new Button("Alueiden hallinta");
+    private Button palveluidenHallinta = new Button("Palveluiden hallinta");
 
     @Override
     public void start(Stage primaryStage) {
@@ -38,17 +46,24 @@ public class Kayttoliittyma extends Application {
         pane.setTop(text);
         pane.setCenter(getHbox());
 
+
+        varaustenHallinta.setOnAction(e -> {
+            //primaryStage.close();
+            katsoVaraukset();
+        });
+
     }
 
+    /**
+     * getHbox metodi
+     * hboxiin asetetaan buttonit
+     * buttoneista päästää uusiin ikkunoihin
+     * @return hBox
+     * @author Konsta
+     */
     public HBox getHbox() {
 
         HBox hBox = new HBox(15);
-
-        Button varaustenHallinta = new Button("Varausten hallinta");
-        Button asikkaidenHallinta = new Button("Asiakkaiden hallinta");
-        Button mokkienHallinta = new Button("Mökkien hallinta");
-        Button alueidenHallinta = new Button("Alueiden hallinta");
-        Button palveluidenHallinta = new Button("Palveluiden hallinta");
 
         hBox.getChildren().addAll(varaustenHallinta, asikkaidenHallinta, mokkienHallinta, alueidenHallinta,
                 palveluidenHallinta);
@@ -56,4 +71,27 @@ public class Kayttoliittyma extends Application {
 
         return hBox;
     }
+
+    /**
+     * katsoVaraukset metodi
+     * pystyy katsomaan varausten tietoja
+     * varaukset avautuu listviewh näkymään
+     * @author Eljas
+     */
+    public void katsoVaraukset() {
+
+        BorderPane paneeli = new BorderPane();
+        TextArea tiedot = new TextArea();
+        ListView<String> lista = new ListView<>();
+
+        paneeli.setLeft(lista);
+        paneeli.setCenter(tiedot);
+
+        Scene varausIkkuna = new Scene(paneeli);
+        Stage varausStage = new Stage();
+
+        varausStage.setScene(varausIkkuna);
+        varausStage.show();
+    }
+
 }
