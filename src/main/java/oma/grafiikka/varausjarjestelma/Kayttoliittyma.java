@@ -212,6 +212,53 @@ public class Kayttoliittyma extends Application {
         });
     }
 
+    /**
+     * Varauksen teko ikkuna
+     * @param parentstage
+     */
+    public void teeVarausIkkuna(Stage parentstage) {
+        GridPane varauspane = new GridPane();
+        varauspane.setVgap(10);
+        varauspane.setPadding(new Insets(10));
+
+        TextField tf1 = new TextField();
+        TextField tf2 = new TextField();
+
+        Button vahvista = new Button("Vahvista varaus");
+
+        DatePicker startDatePicker = new DatePicker();
+        DatePicker endDatePicker = new DatePicker();
+
+        varauspane.add(new Label("Nimi: "), 0, 0);
+        varauspane.add(new Label("Mökki: "), 0, 1);
+        varauspane.add(new Label("Aloitus pvm: "), 0, 2);
+        varauspane.add(new Label("Lopetus pvm: "), 0, 3);
+        varauspane.add(tf1, 1, 0);
+        varauspane.add(tf2, 1, 1);
+        varauspane.add(startDatePicker, 1, 2);
+        varauspane.add(endDatePicker, 1, 3);
+        varauspane.add(vahvista, 0,4);
+
+
+        varauspane.setAlignment(Pos.CENTER);
+
+        Scene varaaScene = new Scene(varauspane, 500, 500);
+        Stage varaaStage = new Stage();
+        varaaStage.setScene(varaaScene);
+        varaaStage.initOwner(parentstage); // Aseta pääikkunaksi vanhempi ikkuna
+        varaaStage.show();
+
+        vahvista.setOnAction(e -> {
+
+            Alert ilmoitus = new Alert(Alert.AlertType.CONFIRMATION);
+            ilmoitus.setContentText("KIITTI FYRKOISTA, SENKIN TYHMÄ");
+            ilmoitus.setHeaderText("TYHMÄ");
+            ilmoitus.setTitle("AHHAHHAHAHAHHAHHA");
+            ilmoitus.show();
+            varaaStage.close();
+
+        });
+    }
 
     /**
      * getHbox metodi
@@ -238,11 +285,21 @@ public class Kayttoliittyma extends Application {
      * @author Eljas
      */
     public void katsoVaraukset() {
-
         BorderPane paneeli = new BorderPane();
         TextArea tiedot = new TextArea();
         ListView<String> lista = new ListView<>();
 
+        VBox vbox = new VBox(15);
+        vbox.setPadding(new Insets(15, 15, 15, 15));
+
+        Button poistavaraus = new Button("poista varaus");
+        Button muokkaavarausta = new Button("muokkaa varausta");
+        Button teevaraus = new Button("tee varaus");
+
+
+        vbox.getChildren().addAll(teevaraus, poistavaraus, muokkaavarausta);
+
+        paneeli.setRight(vbox);
         paneeli.setLeft(lista);
         paneeli.setCenter(tiedot);
 
@@ -252,8 +309,11 @@ public class Kayttoliittyma extends Application {
         varausStage.setScene(varausIkkuna);
         varausStage.show();
         varausStage.setTitle("Varausten hallinta");
-    }
 
+        teevaraus.setOnAction(e -> {
+            teeVarausIkkuna(varausStage);
+        });
+    }
     /**
      * Mökkien hallinta stage ja sen ominaisuudet/toiminnot
      */
