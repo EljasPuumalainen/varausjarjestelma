@@ -25,9 +25,6 @@ public class Kayttoliittyma extends Application {
     private Button mokkienHallinta = new Button("Mökkien hallinta");
     private Button alueidenHallinta = new Button("Alueiden hallinta");
     private Button palveluidenHallinta = new Button("Palveluiden hallinta");
-    private Button lisaaMokki = new Button("Lisää mökki");
-    private Button poistaMokki = new Button("Poista mökki");
-    private Button muokkaaMokkeja = new Button("Muokkaa tietoja");
 
     @Override
     public void start(Stage primaryStage) {
@@ -270,6 +267,10 @@ public class Kayttoliittyma extends Application {
         Stage mokkienHallinta = new Stage();
         Scene kehys = new Scene(pane);
 
+        Button lisaaMokki = new Button("Lisää mökki");
+        Button poistaMokki = new Button("Poista mökki");
+        Button muokkaaMokkeja = new Button("Muokkaa tietoja");
+
         // Luo VBox painikkeille ja aseta ne vasemmalle
         VBox painikeVBox = new VBox(15);
         painikeVBox.setPadding(new Insets(15, 15, 15, 15));
@@ -301,7 +302,7 @@ public class Kayttoliittyma extends Application {
             TextField sijainti = new TextField();
             TextField hinta = new TextField();
 
-            Button lisaaMokki = new Button("Lisää mökki");
+            Button lisaaMokki2 = new Button("Lisää mökki");
 
             //Alueiden combobox
             ComboBox<String> alueComboBox = new ComboBox<>();
@@ -313,7 +314,7 @@ public class Kayttoliittyma extends Application {
             lisaaMokkiPane.add(nimi, 1,0);
             lisaaMokkiPane.add(sijainti, 1,1);
             lisaaMokkiPane.add(hinta, 1,2);
-            lisaaMokkiPane.add(lisaaMokki, 1,4);
+            lisaaMokkiPane.add(lisaaMokki2, 1,4);
 
             lisaaMokkiPane.setAlignment(Pos.CENTER);
             lisaaMokkiStage.setTitle("Lisää mökki");
