@@ -5,16 +5,15 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 
 public class Kayttoliittyma extends Application {
+
+    // eikka kokkonen on fuhrer
 
     public static void main(String[] args) {
         launch(args);
@@ -64,6 +63,23 @@ public class Kayttoliittyma extends Application {
         palveluidenHallinta.setOnAction(e -> {
             palveluidenHallintaIkkuna();
         });
+    }
+    /**
+     * getHbox metodi
+     * hboxiin asetetaan buttonit
+     * buttoneista päästää uusiin ikkunoihin
+     * @return hBox
+     * @author Konsta
+     */
+    public HBox getHbox() {
+
+        HBox hBox = new HBox(15);
+
+        hBox.getChildren().addAll(varaustenHallinta, asikkaidenHallinta, mokkienHallinta, alueidenHallinta,
+                palveluidenHallinta);
+        hBox.setAlignment(Pos.CENTER);
+
+        return hBox;
     }
 
     public void asiakkaidenHallintaIkkuna() {
@@ -212,8 +228,49 @@ public class Kayttoliittyma extends Application {
         });
     }
 
+
+
+
+    /**
+     * katsoVaraukset metodi
+     * pystyy katsomaan varausten tietoja
+     * varaukset avautuu listviewh näkymään
+     * @author Eljas
+     */
+    public void katsoVaraukset() {
+        BorderPane paneeli = new BorderPane();
+        TextArea tiedot = new TextArea();
+        ListView<String> lista = new ListView<>();
+
+        VBox vbox = new VBox(15);
+        vbox.setPadding(new Insets(15, 15, 15, 15));
+
+        Button poistavaraus = new Button("poista varaus");
+        Button muokkaavarausta = new Button("muokkaa varausta");
+        Button teevaraus = new Button("tee varaus");
+
+
+        vbox.getChildren().addAll(teevaraus, poistavaraus, muokkaavarausta);
+
+        paneeli.setRight(vbox);
+        paneeli.setLeft(lista);
+        paneeli.setCenter(tiedot);
+
+        Scene varausIkkuna = new Scene(paneeli);
+        Stage varausStage = new Stage();
+
+        varausStage.setScene(varausIkkuna);
+        varausStage.show();
+        varausStage.setTitle("Varausten hallinta");
+
+        teevaraus.setOnAction(e -> {
+            teeVarausIkkuna(varausStage);
+        });
+    }
+
     /**
      * Varauksen teko ikkuna
+     *
      * @param parentstage
      */
     public void teeVarausIkkuna(Stage parentstage) {
@@ -255,65 +312,12 @@ public class Kayttoliittyma extends Application {
             ilmoitus.setHeaderText("TYHMÄ");
             ilmoitus.setTitle("AHHAHHAHAHAHHAHHA");
             ilmoitus.show();
-            varaaStage.close();
 
         });
     }
 
-    /**
-     * getHbox metodi
-     * hboxiin asetetaan buttonit
-     * buttoneista päästää uusiin ikkunoihin
-     * @return hBox
-     * @author Konsta
-     */
-    public HBox getHbox() {
-
-        HBox hBox = new HBox(15);
-
-        hBox.getChildren().addAll(varaustenHallinta, asikkaidenHallinta, mokkienHallinta, alueidenHallinta,
-                palveluidenHallinta);
-        hBox.setAlignment(Pos.CENTER);
-
-        return hBox;
-    }
-
-    /**
-     * katsoVaraukset metodi
-     * pystyy katsomaan varausten tietoja
-     * varaukset avautuu listviewh näkymään
-     * @author Eljas
-     */
-    public void katsoVaraukset() {
-        BorderPane paneeli = new BorderPane();
-        TextArea tiedot = new TextArea();
-        ListView<String> lista = new ListView<>();
-
-        VBox vbox = new VBox(15);
-        vbox.setPadding(new Insets(15, 15, 15, 15));
-
-        Button poistavaraus = new Button("poista varaus");
-        Button muokkaavarausta = new Button("muokkaa varausta");
-        Button teevaraus = new Button("tee varaus");
 
 
-        vbox.getChildren().addAll(teevaraus, poistavaraus, muokkaavarausta);
-
-        paneeli.setRight(vbox);
-        paneeli.setLeft(lista);
-        paneeli.setCenter(tiedot);
-
-        Scene varausIkkuna = new Scene(paneeli);
-        Stage varausStage = new Stage();
-
-        varausStage.setScene(varausIkkuna);
-        varausStage.show();
-        varausStage.setTitle("Varausten hallinta");
-
-        teevaraus.setOnAction(e -> {
-            teeVarausIkkuna(varausStage);
-        });
-    }
     /**
      * Mökkien hallinta stage ja sen ominaisuudet/toiminnot
      */
