@@ -1,6 +1,8 @@
 package oma.grafiikka.varausjarjestelma;
 
 import javafx.application.Application;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -25,9 +27,6 @@ public class Kayttoliittyma extends Application {
     private Button mokkienHallinta = new Button("Mökkien hallinta");
     private Button alueidenHallinta = new Button("Alueiden hallinta");
     private Button palveluidenHallinta = new Button("Palveluiden hallinta");
-    private Button lisaaMokki = new Button("Lisää mökki");
-    private Button poistaMokki = new Button("Poista mökki");
-    private Button muokkaaMokkeja = new Button("Muokkaa tietoja");
 
     @Override
     public void start(Stage primaryStage) {
@@ -63,10 +62,80 @@ public class Kayttoliittyma extends Application {
             asiakkaidenHallintaIkkuna();
         });
 
+        // Alueiden hallinta ikkuna
+        alueidenHallinta.setOnAction(e -> {
+            alueidenHallintaIkkuna();
+        });
+
         // Palveluiden hallinta ikkuna
         palveluidenHallinta.setOnAction(e -> {
             palveluidenHallintaIkkuna();
         });
+    }
+    public void alueidenHallintaIkkuna() {
+        // Luo uusi Borderpane
+        BorderPane pane = new BorderPane();
+        TextArea tiedot = new TextArea();
+        ObservableList<String> alueidenNimet = FXCollections.observableArrayList();
+        ListView<String> lista = new ListView<>(alueidenNimet);
+
+        // Luo uusi Stage-olio
+        Stage alueHallinta = new Stage();
+        Scene kehys = new Scene(pane);
+
+        // Luo buttonit ikkunaan
+        Button lisaaAlue = new Button("Lisää alue");
+        Button poistaAlue = new Button("Poista alue");
+
+        // Luo VBox painikkeille ja aseta ne vasemmalle
+        VBox painikeVBox = new VBox(15);
+        painikeVBox.setPadding(new Insets(15, 15, 15, 15));
+        painikeVBox.getChildren().addAll(lisaaAlue, poistaAlue);
+        pane.setRight(painikeVBox);
+
+        // Aseta TextArea ja ListView BorderPaneen
+        pane.setCenter(tiedot);
+        pane.setLeft(lista);
+
+        // Aseta uusi Scene Stageen ja näytä ikkuna
+        alueHallinta.setScene(kehys);
+        alueHallinta.show();
+        alueHallinta.setTitle("Alueiden hallinta");
+
+        // Luo lisaaAsiakas buttonille toiminto
+        lisaaAlue.setOnMouseClicked(e -> {
+            Stage lisaaAlueStage = new Stage();
+            GridPane lisaaAluePane = new GridPane();
+            Scene lisaaAsiakasScene = new Scene(lisaaAluePane, 300,300);
+            lisaaAlueStage.setScene(lisaaAsiakasScene);
+            lisaaAlueStage.show();
+            lisaaAluePane.setVgap(5);
+
+            // Lisää labelit ikkunaan
+            lisaaAluePane.add(new Label("Nimi: "), 0,0);
+
+            // Luo textfieldit
+            TextField alueenNimi = new TextField();
+
+            //Luo button
+            Button tallennaAlue = new Button("Tallenna");
+
+            // Lisää textfieldit ja button ikkunaan
+            lisaaAluePane.add(alueenNimi, 1, 0);
+            lisaaAluePane.add(tallennaAlue, 1, 6);
+
+            lisaaAluePane.setAlignment(Pos.CENTER);
+            lisaaAlueStage.setTitle("Lisää alue");
+            // Lisää toiminto buttonille
+            tallennaAlue.setOnAction(event -> {
+                String nimi = alueenNimi.getText();
+                alueidenNimet.add(nimi);
+                alueenNimi.clear();
+
+            });
+
+        });
+
     }
 
     public void asiakkaidenHallintaIkkuna() {
@@ -215,6 +284,53 @@ public class Kayttoliittyma extends Application {
         });
     }
 
+    /**
+     * Varauksen teko ikkuna
+     * @param parentstage
+     */
+    public void teeVarausIkkuna(Stage parentstage) {
+        GridPane varauspane = new GridPane();
+        varauspane.setVgap(10);
+        varauspane.setPadding(new Insets(10));
+
+        TextField tf1 = new TextField();
+        TextField tf2 = new TextField();
+
+        Button vahvista = new Button("Vahvista varaus");
+
+        DatePicker startDatePicker = new DatePicker();
+        DatePicker endDatePicker = new DatePicker();
+
+        varauspane.add(new Label("Nimi: "), 0, 0);
+        varauspane.add(new Label("Mökki: "), 0, 1);
+        varauspane.add(new Label("Aloitus pvm: "), 0, 2);
+        varauspane.add(new Label("Lopetus pvm: "), 0, 3);
+        varauspane.add(tf1, 1, 0);
+        varauspane.add(tf2, 1, 1);
+        varauspane.add(startDatePicker, 1, 2);
+        varauspane.add(endDatePicker, 1, 3);
+        varauspane.add(vahvista, 0,4);
+
+
+        varauspane.setAlignment(Pos.CENTER);
+
+        Scene varaaScene = new Scene(varauspane, 500, 500);
+        Stage varaaStage = new Stage();
+        varaaStage.setScene(varaaScene);
+        varaaStage.initOwner(parentstage); // Aseta pääikkunaksi vanhempi ikkuna
+        varaaStage.show();
+
+        vahvista.setOnAction(e -> {
+
+            Alert ilmoitus = new Alert(Alert.AlertType.CONFIRMATION);
+            ilmoitus.setContentText("KIITTI FYRKOISTA, SENKIN TYHMÄ");
+            ilmoitus.setHeaderText("TYHMÄ");
+            ilmoitus.setTitle("AHHAHHAHAHAHHAHHA");
+            ilmoitus.show();
+            varaaStage.close();
+
+        });
+    }
 
     /**
      * getHbox metodi
@@ -241,11 +357,21 @@ public class Kayttoliittyma extends Application {
      * @author Eljas
      */
     public void katsoVaraukset() {
-
         BorderPane paneeli = new BorderPane();
         TextArea tiedot = new TextArea();
         ListView<String> lista = new ListView<>();
 
+        VBox vbox = new VBox(15);
+        vbox.setPadding(new Insets(15, 15, 15, 15));
+
+        Button poistavaraus = new Button("poista varaus");
+        Button muokkaavarausta = new Button("muokkaa varausta");
+        Button teevaraus = new Button("tee varaus");
+
+
+        vbox.getChildren().addAll(teevaraus, poistavaraus, muokkaavarausta);
+
+        paneeli.setRight(vbox);
         paneeli.setLeft(lista);
         paneeli.setCenter(tiedot);
 
@@ -255,8 +381,11 @@ public class Kayttoliittyma extends Application {
         varausStage.setScene(varausIkkuna);
         varausStage.show();
         varausStage.setTitle("Varausten hallinta");
-    }
 
+        teevaraus.setOnAction(e -> {
+            teeVarausIkkuna(varausStage);
+        });
+    }
     /**
      * Mökkien hallinta stage ja sen ominaisuudet/toiminnot
      */
@@ -269,6 +398,10 @@ public class Kayttoliittyma extends Application {
         // Luo uusi Stage-olio
         Stage mokkienHallinta = new Stage();
         Scene kehys = new Scene(pane);
+
+        Button lisaaMokki = new Button("Lisää mökki");
+        Button poistaMokki = new Button("Poista mökki");
+        Button muokkaaMokkeja = new Button("Muokkaa tietoja");
 
         // Luo VBox painikkeille ja aseta ne vasemmalle
         VBox painikeVBox = new VBox(15);
@@ -301,7 +434,7 @@ public class Kayttoliittyma extends Application {
             TextField sijainti = new TextField();
             TextField hinta = new TextField();
 
-            Button lisaaMokki = new Button("Lisää mökki");
+            Button lisaaMokki2 = new Button("Lisää mökki");
 
             //Alueiden combobox
             ComboBox<String> alueComboBox = new ComboBox<>();
@@ -313,7 +446,7 @@ public class Kayttoliittyma extends Application {
             lisaaMokkiPane.add(nimi, 1,0);
             lisaaMokkiPane.add(sijainti, 1,1);
             lisaaMokkiPane.add(hinta, 1,2);
-            lisaaMokkiPane.add(lisaaMokki, 1,4);
+            lisaaMokkiPane.add(lisaaMokki2, 1,4);
 
             lisaaMokkiPane.setAlignment(Pos.CENTER);
             lisaaMokkiStage.setTitle("Lisää mökki");
