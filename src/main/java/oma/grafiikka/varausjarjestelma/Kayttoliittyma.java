@@ -1,6 +1,7 @@
 package oma.grafiikka.varausjarjestelma;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -12,8 +13,6 @@ import javafx.stage.Stage;
 
 
 public class Kayttoliittyma extends Application {
-
-    // eikka kokkonen on fuhrer
 
     public static void main(String[] args) {
         launch(args);
@@ -56,7 +55,11 @@ public class Kayttoliittyma extends Application {
         });
         // Asiakkaiden hallinta ikkuna
         asikkaidenHallinta.setOnAction(e -> {
-            asiakkaidenHallintaIkkuna();
+            try {
+                asiakkaidenHallintaIkkuna();
+            } catch (ClassNotFoundException ex) {
+                throw new RuntimeException(ex);
+            }
         });
 
         // Palveluiden hallinta ikkuna
@@ -65,9 +68,7 @@ public class Kayttoliittyma extends Application {
         });
     }
     /**
-     * getHbox metodi
      * hboxiin asetetaan buttonit
-     * buttoneista päästää uusiin ikkunoihin
      * @return hBox
      * @author Konsta
      */
@@ -82,13 +83,16 @@ public class Kayttoliittyma extends Application {
         return hBox;
     }
 
-    public void asiakkaidenHallintaIkkuna() {
+    public void asiakkaidenHallintaIkkuna() throws ClassNotFoundException {
+        Asiakas asiakas = new Asiakas();
 
-        // Luo uusi Borderpane
-
+        // Luo uusi Borderpane ja textarea
         BorderPane pane = new BorderPane();
         TextArea tiedot = new TextArea();
-        ListView<String> lista = new ListView<>();
+        tiedot.setEditable(false);
+        tiedot.setFont(Font.font(15));
+
+        ListView<String> asiakasLista = new ListView<>(asiakas.asiakas.get());
 
         // Luo uusi Stage-olio
         Stage asiakasHallinta = new Stage();
@@ -96,18 +100,19 @@ public class Kayttoliittyma extends Application {
 
         // Luo buttonit ikkunaan
         Button lisaaAsiakas = new Button("Lisää asiakas");
-        Button muokkaaAsiakas = new Button("Muokkaa asiakkaan tietoja");
+
         Button poistaAsiakas = new Button("Poista asiakas");
+        Button tarkistaTiedot = new Button("Tarkista tiedot");
 
         // Luo VBox painikkeille ja aseta ne vasemmalle
         VBox painikeVBox = new VBox(15);
         painikeVBox.setPadding(new Insets(15, 15, 15, 15));
-        painikeVBox.getChildren().addAll(lisaaAsiakas, muokkaaAsiakas, poistaAsiakas);
+        painikeVBox.getChildren().addAll(lisaaAsiakas, poistaAsiakas, tarkistaTiedot);
         pane.setRight(painikeVBox);
 
         // Aseta TextArea ja ListView BorderPaneen
         pane.setCenter(tiedot);
-        pane.setLeft(lista);
+        pane.setLeft(asiakasLista);
 
         // Aseta uusi Scene Stageen ja näytä ikkuna
         asiakasHallinta.setScene(kehys);
@@ -128,14 +133,18 @@ public class Kayttoliittyma extends Application {
             lisaaAsiakasPane.add(new Label("Sukunimi:"), 0, 1);
             lisaaAsiakasPane.add(new Label("Lähiosoite: "), 0, 2);
             lisaaAsiakasPane.add(new Label("Postinumero: "), 0, 3);
-            lisaaAsiakasPane.add(new Label("Sähköposti: "), 0, 4);
-            lisaaAsiakasPane.add(new Label("Puhelinnumero: "), 0, 5);
+            lisaaAsiakasPane.add(new Label("postitoimipaikka: "),0, 4);
+            lisaaAsiakasPane.add(new Label("Sähköposti: "), 0, 5);
+            lisaaAsiakasPane.add(new Label("Puhelinnumero: "), 0, 6);
 
             // Luo textfieldit
             TextField etunimi = new TextField();
             TextField sukunimi = new TextField();
             TextField lahiosoite = new TextField();
+
             TextField postinumero = new TextField();
+            TextField postitoimipaikka = new TextField();
+
             TextField sahkoposti = new TextField();
             TextField puhelinnumero = new TextField();
 
@@ -147,19 +156,53 @@ public class Kayttoliittyma extends Application {
             lisaaAsiakasPane.add(sukunimi, 1,1);
             lisaaAsiakasPane.add(lahiosoite, 1,2);
             lisaaAsiakasPane.add(postinumero, 1, 3);
-            lisaaAsiakasPane.add(sahkoposti, 1,4);
-            lisaaAsiakasPane.add(puhelinnumero, 1, 5);
-            lisaaAsiakasPane.add(tallennaAsiakas, 1, 6);
+            lisaaAsiakasPane.add(postitoimipaikka, 1, 4);
+            lisaaAsiakasPane.add(sahkoposti, 1,5);
+            lisaaAsiakasPane.add(puhelinnumero, 1, 6);
+            lisaaAsiakasPane.add(tallennaAsiakas, 1, 7);
 
+            tallennaAsiakas.setOnAction(a -> {
+
+                asiakas.kirjoitaPostiTiedot(postinumero.getText(), postitoimipaikka.getText());
+
+                asiakas.kirjoitaAsiakasTiedot(postinumero.getText(), etunimi.getText(), sukunimi.getText(),
+                        lahiosoite.getText(), sahkoposti.getText(), puhelinnumero.getText());
+
+                Platform.runLater(() -> {
+                    asiakasLista.setItems(asiakas.asiakas.get());
+                });
+
+                asiakasHallinta.show();
+                lisaaAsiakasStage.close();
+
+            });
             lisaaAsiakasPane.setAlignment(Pos.CENTER);
             lisaaAsiakasStage.setTitle("Lisää asiakas");
-
         });
 
+        poistaAsiakas.setOnAction(p -> {
 
+            String nimi = asiakasLista.getSelectionModel().getSelectedItem();
 
+            String[] nimiOsat = nimi.split(" ");
+            String etunimi = nimiOsat[0];
+            String sukunimi = nimiOsat[1];
 
+            asiakas.poistaAsiakas(etunimi, sukunimi);
 
+            asiakasLista.getItems().remove(nimi);
+        });
+
+        tarkistaTiedot.setOnAction(t -> {
+            String valittu = asiakasLista.getSelectionModel().getSelectedItem();
+
+            String[] nimiOsat = valittu.split(" ");
+            String etunimi = nimiOsat[0];
+            String sukunimi = nimiOsat[1];
+
+            tiedot.setText(asiakas.haeTiedot(etunimi, sukunimi).getText());
+
+        });
     }
 
     /**
@@ -228,9 +271,6 @@ public class Kayttoliittyma extends Application {
         });
     }
 
-
-
-
     /**
      * katsoVaraukset metodi
      * pystyy katsomaan varausten tietoja
@@ -238,9 +278,14 @@ public class Kayttoliittyma extends Application {
      * @author Eljas
      */
     public void katsoVaraukset() {
+
+        VarausikkunaSql yhteys = new VarausikkunaSql();
+
         BorderPane paneeli = new BorderPane();
         TextArea tiedot = new TextArea();
         ListView<String> lista = new ListView<>();
+
+        lista.setItems(yhteys.varaukset);
 
         VBox vbox = new VBox(15);
         vbox.setPadding(new Insets(15, 15, 15, 15));
@@ -248,7 +293,6 @@ public class Kayttoliittyma extends Application {
         Button poistavaraus = new Button("poista varaus");
         Button muokkaavarausta = new Button("muokkaa varausta");
         Button teevaraus = new Button("tee varaus");
-
 
         vbox.getChildren().addAll(teevaraus, poistavaraus, muokkaavarausta);
 
@@ -278,8 +322,9 @@ public class Kayttoliittyma extends Application {
         varauspane.setVgap(10);
         varauspane.setPadding(new Insets(10));
 
-        TextField tf1 = new TextField();
-        TextField tf2 = new TextField();
+        TextField etunimi = new TextField();
+        TextField sukunimi = new TextField();
+        TextField mokki = new TextField();
 
         Button vahvista = new Button("Vahvista varaus");
 
@@ -287,14 +332,16 @@ public class Kayttoliittyma extends Application {
         DatePicker endDatePicker = new DatePicker();
 
         varauspane.add(new Label("Nimi: "), 0, 0);
-        varauspane.add(new Label("Mökki: "), 0, 1);
-        varauspane.add(new Label("Aloitus pvm: "), 0, 2);
-        varauspane.add(new Label("Lopetus pvm: "), 0, 3);
-        varauspane.add(tf1, 1, 0);
-        varauspane.add(tf2, 1, 1);
-        varauspane.add(startDatePicker, 1, 2);
-        varauspane.add(endDatePicker, 1, 3);
-        varauspane.add(vahvista, 0,4);
+        varauspane.add(new Label("Sukunimi: "), 0, 1);
+        varauspane.add(new Label("mökki: "),0,2);
+        varauspane.add(new Label("Aloitus pvm: "), 0, 3);
+        varauspane.add(new Label("Lopetus pvm: "), 0, 4);
+        varauspane.add(etunimi, 1, 0);
+        varauspane.add(sukunimi, 1, 1);
+        varauspane.add(mokki, 1, 2);
+        varauspane.add(startDatePicker, 1, 3);
+        varauspane.add(endDatePicker, 1, 4);
+        varauspane.add(vahvista, 0,5);
 
 
         varauspane.setAlignment(Pos.CENTER);
