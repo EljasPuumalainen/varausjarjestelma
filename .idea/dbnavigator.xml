@@ -36,6 +36,11 @@
         <condition column="mokki_id" operator="=" value="" active="true" />
       </filter>
     </filter-actions>
+    <filter-actions connection-id="78db0a48-0046-4692-a936-5348d1b772e7" dataset="vn.alue" active-filter-id="6775109e-9a38-498d-801e-8d44c751d614">
+      <filter id="6775109e-9a38-498d-801e-8d44c751d614" name="Filter 1" temporary="false" custom-name="false" type="basic" join-type="AND">
+        <condition column="alue_id" operator="=" value="" active="true" />
+      </filter>
+    </filter-actions>
     <filter-actions connection-id="78db0a48-0046-4692-a936-5348d1b772e7" dataset="vn.palvelu" active-filter-id="EMPTY_FILTER" />
   </component>
   <component name="DBNavigator.Project.ObjectQuickFilterManager">

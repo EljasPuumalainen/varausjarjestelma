@@ -495,12 +495,12 @@ public class Kayttoliittyma extends Application {
 
             TableView alueTableView = new TableView<>();
 
-            TableColumn<Alue, String> alueIDColumn = new TableColumn<>("Alue ID");
-            alueIDColumn.setCellValueFactory(cellData -> cellData.getValue().getAlueIdProperty().asString());
+            TableColumn<Alue, Integer> alueIDColumn = new TableColumn<>("Alue ID");
+            alueIDColumn.setCellValueFactory(cellData -> cellData.getValue().getAlueIdProperty().asObject());
 
-
-            TableColumn<Alue, String> nimiColumn = new TableColumn<>("Mökin nimi");
+            TableColumn<Alue, String> nimiColumn = new TableColumn<>("Alueen nimi");
             nimiColumn.setCellValueFactory(cellData -> cellData.getValue().getNimiProperty());
+
 
             alueTableView.getColumns().addAll(alueIDColumn, nimiColumn);
 
@@ -520,6 +520,51 @@ public class Kayttoliittyma extends Application {
 
             // Aseta VBox vasempaan reunaan
             pane.setLeft(buttonBox);
+
+            lisaaAlue.setOnAction(e -> {
+                Stage lisaaAlueStage = new Stage();
+                GridPane pane1 = new GridPane();
+                Scene lisaaMokkiScene = new Scene(pane1, 300, 300);
+                lisaaAlueStage.setScene(lisaaMokkiScene);
+                lisaaAlueStage.show();
+                pane1.setVgap(5);
+
+                pane1.add(new Label("Alue ID: "), 0, 0);
+                pane1.add(new Label("Nimi: "), 0, 1);
+
+                TextField alueID = new TextField();
+                TextField nimi = new TextField();
+
+                pane1.add(alueID, 1, 0);
+                pane1.add(nimi, 1, 1);
+
+                pane1.setAlignment(Pos.CENTER);
+                lisaaAlueStage.setTitle("Lisää Alue");
+
+                Button lisaaAlueBT = new Button("Lisää Alue");
+
+                pane1.add(lisaaAlueBT, 1,2);
+
+                lisaaAlueBT.setOnAction(ev -> {
+                    try {
+                        // Tarkista, että kaikki kentät ovat täytettyjä ennen tietojen tallentamista
+                        if (!alueID.getText().isEmpty() && !nimi.getText().isEmpty()) {
+                            // Luo uusi Alue-olio syötetyillä tiedoilla
+                            Alue uusiAlue = new Alue(Integer.parseInt(alueID.getText()), nimi.getText());
+
+                            // Lisää Alue tietokantaan
+                            uusiAlue.lisaaAlueTietokantaan(connection);
+
+                            // Päivitä TableView hakeaksesi uudet tiedot tietokannasta
+                            alueTableView.setItems(Alue.haeAlueetTietokannasta(connection));
+                        }
+                    } catch (SQLException | NumberFormatException ex) {
+                        ex.printStackTrace();
+                        // Voit lisätä tässä käyttöliittymässä ilmoituksen virheestä, esim. Alert
+                    }
+                });
+
+            });
 
         } catch (SQLException e) {
             e.printStackTrace();

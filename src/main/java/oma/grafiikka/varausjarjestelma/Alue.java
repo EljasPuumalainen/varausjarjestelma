@@ -1,13 +1,13 @@
 package oma.grafiikka.varausjarjestelma;
 
-import javafx.beans.property.*;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.StringProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 
 public class Alue {
 
@@ -26,14 +26,14 @@ public class Alue {
     public String getNimi() {
         return nimi;
     }
+
     public IntegerProperty getAlueIdProperty() {
         return new SimpleIntegerProperty(alueId);
     }
+
     public StringProperty getNimiProperty() {
         return new SimpleStringProperty(nimi);
     }
-
-
 
     public static ObservableList<Alue> haeAlueetTietokannasta(Connection connection) throws SQLException {
         ObservableList<Alue> alueet = FXCollections.observableArrayList();
@@ -46,5 +46,14 @@ public class Alue {
             alueet.add(alue);
         }
         return alueet;
+    }
+
+    public void lisaaAlueTietokantaan(Connection connection) throws SQLException {
+        String sql = "INSERT INTO alue (alue_id, nimi) VALUES (?, ?)";
+        try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setInt(1, this.alueId);
+            preparedStatement.setString(2, this.nimi);
+            preparedStatement.executeUpdate();
+        }
     }
 }
