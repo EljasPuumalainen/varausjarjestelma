@@ -12,8 +12,15 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+
 
 public class Kayttoliittyma extends Application {
+
+    private Connection connection;
 
     public static void main(String[] args) {
         launch(args);
@@ -24,13 +31,14 @@ public class Kayttoliittyma extends Application {
     private Button mokkienHallinta = new Button("Mökkien hallinta");
     private Button alueidenHallinta = new Button("Alueiden hallinta");
     private Button palveluidenHallinta = new Button("Palveluiden hallinta");
+    private TableView<Mokki> mokkiTableView = new TableView<>();
 
     @Override
     public void start(Stage primaryStage) {
 
         BorderPane pane = new BorderPane();
 
-        Scene scene = new Scene(pane, 1000,500);
+        Scene scene = new Scene(pane, 1000, 500);
         primaryStage.setTitle("Varausjärjestelmä");
         primaryStage.setScene(scene);
         primaryStage.show();
@@ -39,7 +47,7 @@ public class Kayttoliittyma extends Application {
         text.setFont(Font.font(30));
 
         BorderPane.setAlignment(text, Pos.TOP_CENTER);
-        BorderPane.setMargin(text, new Insets(20,0,0,0));
+        BorderPane.setMargin(text, new Insets(20, 0, 0, 0));
 
 
         pane.setTop(text);
@@ -64,12 +72,17 @@ public class Kayttoliittyma extends Application {
         palveluidenHallinta.setOnAction(e -> {
             palveluidenHallintaIkkuna();
         });
+
+        alueidenHallinta.setOnAction(e -> {
+            alueidenHallintaIkkuna();
+        });
     }
 
     /**
      * getHbox metodi
      * hboxiin asetetaan buttonit
      * buttoneista päästää uusiin ikkunoihin
+     *
      * @return hBox
      * @author Konsta
      */
@@ -120,13 +133,13 @@ public class Kayttoliittyma extends Application {
         lisaaAsiakas.setOnMouseClicked(e -> {
             Stage lisaaAsiakasStage = new Stage();
             GridPane lisaaAsiakasPane = new GridPane();
-            Scene lisaaAsiakasScene = new Scene(lisaaAsiakasPane, 300,300);
+            Scene lisaaAsiakasScene = new Scene(lisaaAsiakasPane, 300, 300);
             lisaaAsiakasStage.setScene(lisaaAsiakasScene);
             lisaaAsiakasStage.show();
             lisaaAsiakasPane.setVgap(5);
 
             // Lisää labelit ikkunaan
-            lisaaAsiakasPane.add(new Label("Etunimi: "), 0,0);
+            lisaaAsiakasPane.add(new Label("Etunimi: "), 0, 0);
             lisaaAsiakasPane.add(new Label("Sukunimi:"), 0, 1);
             lisaaAsiakasPane.add(new Label("Lähiosoite: "), 0, 2);
             lisaaAsiakasPane.add(new Label("Postinumero: "), 0, 3);
@@ -146,10 +159,10 @@ public class Kayttoliittyma extends Application {
 
             // Lisää textfieldit ja button ikkunaan
             lisaaAsiakasPane.add(etunimi, 1, 0);
-            lisaaAsiakasPane.add(sukunimi, 1,1);
-            lisaaAsiakasPane.add(lahiosoite, 1,2);
+            lisaaAsiakasPane.add(sukunimi, 1, 1);
+            lisaaAsiakasPane.add(lahiosoite, 1, 2);
             lisaaAsiakasPane.add(postinumero, 1, 3);
-            lisaaAsiakasPane.add(sahkoposti, 1,4);
+            lisaaAsiakasPane.add(sahkoposti, 1, 4);
             lisaaAsiakasPane.add(puhelinnumero, 1, 5);
             lisaaAsiakasPane.add(tallennaAsiakas, 1, 6);
 
@@ -159,14 +172,10 @@ public class Kayttoliittyma extends Application {
         });
 
 
-
-
-
     }
 
     /**
      * palveluiden hallinta metodi
-     *
      */
     public void palveluidenHallintaIkkuna() {
         // Luo uusi BorderPane
@@ -203,13 +212,13 @@ public class Kayttoliittyma extends Application {
         lisaaPalvelu.setOnMouseClicked(e -> {
             Stage lisaaMokkiStage = new Stage();
             GridPane lisaaMokkiPane = new GridPane();
-            Scene lisaaMokkiScene = new Scene(lisaaMokkiPane, 300,300);
+            Scene lisaaMokkiScene = new Scene(lisaaMokkiPane, 300, 300);
             lisaaMokkiStage.setScene(lisaaMokkiScene);
             lisaaMokkiStage.show();
             lisaaMokkiPane.setVgap(5);
 
             // Luo labelit
-            lisaaMokkiPane.add(new Label("Palvelun nimi: "), 0,0);
+            lisaaMokkiPane.add(new Label("Palvelun nimi: "), 0, 0);
             lisaaMokkiPane.add(new Label("Hinta:"), 0, 1);
 
             // Luo textfieldit
@@ -220,9 +229,9 @@ public class Kayttoliittyma extends Application {
             Button tallennaPalvelu = new Button("Tallenna");
 
             // Lisää tiedot ikkunaan
-            lisaaMokkiPane.add(palvelunNimi, 1,0);
-            lisaaMokkiPane.add(hinta, 1,1);
-            lisaaMokkiPane.add(tallennaPalvelu, 1,2);
+            lisaaMokkiPane.add(palvelunNimi, 1, 0);
+            lisaaMokkiPane.add(hinta, 1, 1);
+            lisaaMokkiPane.add(tallennaPalvelu, 1, 2);
 
             lisaaMokkiPane.setAlignment(Pos.CENTER);
             lisaaMokkiStage.setTitle("Lisää palvelu");
@@ -232,6 +241,7 @@ public class Kayttoliittyma extends Application {
 
     /**
      * Varauksen teko ikkuna
+     *
      * @param parentstage
      */
     public void teeVarausIkkuna(Stage parentstage) {
@@ -255,7 +265,7 @@ public class Kayttoliittyma extends Application {
         varauspane.add(tf2, 1, 1);
         varauspane.add(startDatePicker, 1, 2);
         varauspane.add(endDatePicker, 1, 3);
-        varauspane.add(vahvista, 0,4);
+        varauspane.add(vahvista, 0, 4);
 
 
         varauspane.setAlignment(Pos.CENTER);
@@ -282,6 +292,7 @@ public class Kayttoliittyma extends Application {
      * katsoVaraukset metodi
      * pystyy katsomaan varausten tietoja
      * varaukset avautuu listviewh näkymään
+     *
      * @author Eljas
      */
     public void katsoVaraukset() {
@@ -314,66 +325,205 @@ public class Kayttoliittyma extends Application {
             teeVarausIkkuna(varausStage);
         });
     }
+
     /**
      * Mökkien hallinta stage ja sen ominaisuudet/toiminnot
      */
     public void mokkienHallinta() {
-        Stage mokkiIkkuna = new Stage();
-        BorderPane pane = new BorderPane();
-        Scene scene = new Scene(pane, 900, 400);
-        mokkiIkkuna.setScene(scene);
-        mokkiIkkuna.setTitle("Mökkien hallinta");
+        try {
+            // Avaa tietokantayhteys
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/vn", "root", "root");
 
-        TableView<Mokki> mokkiTableView = new TableView<>();
+            Stage mokkiIkkuna = new Stage();
+            BorderPane pane = new BorderPane();
+            Scene scene = new Scene(pane, 900, 400);
+            mokkiIkkuna.setScene(scene);
+            mokkiIkkuna.setTitle("Mökkien hallinta");
 
-        TableColumn<Mokki, String> nimiColumn = new TableColumn<>("Nimi");
-        nimiColumn.setCellValueFactory(cellData -> cellData.getValue().getNimiProperty());
+            mokkiTableView = new TableView<>();
 
-        TableColumn<Mokki, String> sijaintiColumn = new TableColumn<>("Sijainti");
-        sijaintiColumn.setCellValueFactory(cellData -> cellData.getValue().getSijaintiProperty());
+            TableColumn<Mokki, String> postinumeroColumn = new TableColumn<>("Postinumero");
+            postinumeroColumn.setCellValueFactory(cellData -> cellData.getValue().getPostinroProperty());
 
-        TableColumn<Mokki, String> katuosoiteColumn = new TableColumn<>("Katuosoite");
-        katuosoiteColumn.setCellValueFactory(cellData -> cellData.getValue().getKatuosoiteProperty());
+            TableColumn<Mokki, String> nimiColumn = new TableColumn<>("Mökin nimi");
+            nimiColumn.setCellValueFactory(cellData -> cellData.getValue().getNimiProperty());
 
-        TableColumn<Mokki, String> postinumeroColumn = new TableColumn<>("Postinumero");
-        postinumeroColumn.setCellValueFactory(cellData -> cellData.getValue().getPostinroProperty());
+            TableColumn<Mokki, String> katuosoiteColumn = new TableColumn<>("Katuosoite");
+            katuosoiteColumn.setCellValueFactory(cellData -> cellData.getValue().getKatuosoiteProperty());
 
-        TableColumn<Mokki, Double> hintaColumn = new TableColumn<>("Hinta");
-        hintaColumn.setCellValueFactory(cellData -> cellData.getValue().getHintaProperty().asObject());
+            TableColumn<Mokki, Double> hintaColumn = new TableColumn<>("Hinta");
+            hintaColumn.setCellValueFactory(cellData -> cellData.getValue().getHintaProperty().asObject());
 
-        TableColumn<Mokki, String> kuvausColumn = new TableColumn<>("Kuvaus");
-        kuvausColumn.setCellValueFactory(cellData -> cellData.getValue().getKuvausProperty());
+            TableColumn<Mokki, String> kuvausColumn = new TableColumn<>("Kuvaus");
+            kuvausColumn.setCellValueFactory(cellData -> cellData.getValue().getKuvausProperty());
 
-        TableColumn<Mokki, String> henkilomaaraColumn = new TableColumn<>("Henkilömäärä");
-        henkilomaaraColumn.setCellValueFactory(cellData -> cellData.getValue().getHenkilomaaraProperty());
+            TableColumn<Mokki, String> henkilomaaraColumn = new TableColumn<>("Henkilömäärä");
+            henkilomaaraColumn.setCellValueFactory(cellData -> cellData.getValue().getHenkilomaaraProperty());
 
-        TableColumn<Mokki, String> varusteluColumn = new TableColumn<>("Varustelu");
-        varusteluColumn.setCellValueFactory(cellData -> cellData.getValue().getVarusteluProperty());
+            TableColumn<Mokki, String> varusteluColumn = new TableColumn<>("Varustelu");
+            varusteluColumn.setCellValueFactory(cellData -> cellData.getValue().getVarusteluProperty());
 
-        mokkiTableView.getColumns().addAll(nimiColumn, sijaintiColumn, katuosoiteColumn, postinumeroColumn, hintaColumn, kuvausColumn, henkilomaaraColumn, varusteluColumn);
 
-        ObservableList<Mokki> mokit = FXCollections.observableArrayList(
-                new Mokki("", "", 0, "", "", "", 0, "")
-        );
+            mokkiTableView.getColumns().addAll(nimiColumn, katuosoiteColumn, postinumeroColumn, hintaColumn, henkilomaaraColumn, varusteluColumn);
 
-        mokkiTableView.setItems(mokit);
+            // Haetaan tiedot tietokannasta
+            ObservableList<Mokki> mokit = Mokki.haeMokitTietokannasta(connection);
+            mokkiTableView.setItems(mokit);
 
-        // Aseta TableView BorderPaneen
-        pane.setCenter(mokkiTableView);
+            // Aseta TableView BorderPaneen
+            pane.setCenter(mokkiTableView);
 
-        Button lisaaMokki = new Button("Lisää");
-        Button muokkaaNappi = new Button("Muokkaa");
-        Button poistaNappi = new Button("Poista");
+            Button lisaaMokki = new Button("Lisää");
+            Button muokkaaNappi = new Button("Muokkaa");
+            Button poistaNappi = new Button("Poista");
 
-        // Aseta napit VBoxiin
-        VBox buttonBox = new VBox(lisaaMokki, muokkaaNappi, poistaNappi);
-        buttonBox.setAlignment(Pos.CENTER);
-        buttonBox.setPadding(new Insets(15,15,15,15));
-        buttonBox.setSpacing(10);
+            // Aseta napit VBoxiin
+            VBox buttonBox = new VBox(lisaaMokki, muokkaaNappi, poistaNappi);
+            buttonBox.setAlignment(Pos.CENTER);
+            buttonBox.setPadding(new Insets(15, 15, 15, 15));
+            buttonBox.setSpacing(10);
 
-        // Aseta VBox vasempaan reunaan
-        pane.setLeft(buttonBox);
+            // Aseta VBox vasempaan reunaan
+            pane.setLeft(buttonBox);
 
-        mokkiIkkuna.show();
+            mokkiIkkuna.show();
+
+            lisaaMokki.setOnMouseClicked(e -> {
+                Stage lisaaMokkiStage = new Stage();
+                GridPane lisaaMokkiPane = new GridPane();
+                Scene lisaaMokkiScene = new Scene(lisaaMokkiPane, 300, 300);
+                lisaaMokkiStage.setScene(lisaaMokkiScene);
+                lisaaMokkiStage.show();
+                lisaaMokkiPane.setVgap(5);
+
+                lisaaMokkiPane.add(new Label("Postinumero: "), 0, 0);
+                lisaaMokkiPane.add(new Label("Nimi:"), 0, 1);
+                lisaaMokkiPane.add(new Label("Katuosoite: "), 0, 2);
+                lisaaMokkiPane.add(new Label("Hinta: "), 0, 3);
+                lisaaMokkiPane.add(new Label("Kuvaus: "), 0, 4);
+                lisaaMokkiPane.add(new Label("Henkilömäärä: "), 0, 5);
+                lisaaMokkiPane.add(new Label("Varustelu: "), 0, 6);
+
+                TextField nimi = new TextField();
+                TextField katuosoite = new TextField();
+                TextField postinumero = new TextField();
+                TextField hinta = new TextField();
+                TextField kuvaus = new TextField();
+                TextField henkilomaara = new TextField();
+                TextField varustelu = new TextField();
+
+                Button lisaaMokki2 = new Button("Lisää mökki");
+
+                //Alueiden combobox
+                ComboBox<String> alueComboBox = new ComboBox<>();
+                alueComboBox.getItems().addAll("Ruka", "Tahko", "Ylläs");
+
+                lisaaMokkiPane.add(new Label("Alue"), 0, 7);
+                lisaaMokkiPane.add(alueComboBox, 1, 7);
+
+                lisaaMokkiPane.add(postinumero, 1, 0);
+                lisaaMokkiPane.add(nimi, 1, 1);
+                lisaaMokkiPane.add(katuosoite, 1, 2);
+                lisaaMokkiPane.add(hinta, 1, 3);
+                lisaaMokkiPane.add(kuvaus, 1, 4);
+                lisaaMokkiPane.add(henkilomaara, 1, 5);
+                lisaaMokkiPane.add(varustelu, 1, 6);
+                lisaaMokkiPane.add(lisaaMokki2, 1, 8);
+
+                lisaaMokkiPane.setAlignment(Pos.CENTER);
+                lisaaMokkiStage.setTitle("Lisää mökki");
+
+                // Luo lisaaMokki buttonille toiminto
+                lisaaMokki2.setOnAction(ev -> {
+                    try {
+                        // Tarkista, että kaikki tekstikentät ovat täytettyjä ennen tietojen tallentamista
+                        if (!postinumero.getText().isEmpty() && !nimi.getText().isEmpty()
+                                && !katuosoite.getText().isEmpty() && !hinta.getText().isEmpty()
+                                && !kuvaus.getText().isEmpty() && !henkilomaara.getText().isEmpty()
+                                && !varustelu.getText().isEmpty()) {
+
+                            // Luo uusi Mokki-olio syötetyillä tiedoilla
+                            Mokki uusiMokki = new Mokki(
+                                    postinumero.getText(),
+                                    nimi.getText(),
+                                    katuosoite.getText(),
+                                    Double.parseDouble(hinta.getText()),
+                                    kuvaus.getText(),
+                                    Integer.parseInt(henkilomaara.getText()),
+                                    varustelu.getText()
+                            );
+
+
+                            // Lisää Mokki tietokantaan
+                            Mokki.lisaaMokkiTietokantaan(connection, uusiMokki);
+
+                            // Päivitä TableView hakeaksesi uudet tiedot tietokannasta
+                            mokkiTableView.setItems(Mokki.haeMokitTietokannasta(connection));
+                        } else {
+                            // Jos jotkin kentät ovat tyhjiä, näytä ilmoitus
+                            Alert alert = new Alert(Alert.AlertType.WARNING);
+                            alert.setTitle("Tietojen puuttuminen");
+                            alert.setHeaderText(null);
+                            alert.setContentText("Kaikkia kenttiä on täytettävä ennen lisäämistä.");
+                            alert.showAndWait();
+                        }
+                    } catch (SQLException | NumberFormatException ex) {
+                        ex.printStackTrace();
+                        // Voit lisätä tässä käyttöliittymässä ilmoituksen virheestä, esim. Alert
+                    }
+                });
+
+
+            });
+        } catch (SQLException e) {
+            e.printStackTrace();
+
+        }
+    }
+
+    public void alueidenHallintaIkkuna() {
+
+        try {
+            // Avaa tietokantayhteys
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/vn", "root", "root");
+
+            Stage alueIkkuna = new Stage();
+            BorderPane pane = new BorderPane();
+            Scene scene = new Scene(pane, 900, 400);
+            alueIkkuna.setScene(scene);
+            alueIkkuna.setTitle("Alueiden hallinta");
+
+            TableView alueTableView = new TableView<>();
+
+            TableColumn<Alue, String> alueIDColumn = new TableColumn<>("Alue ID");
+            alueIDColumn.setCellValueFactory(cellData -> cellData.getValue().getAlueIdProperty().asString());
+
+
+            TableColumn<Alue, String> nimiColumn = new TableColumn<>("Mökin nimi");
+            nimiColumn.setCellValueFactory(cellData -> cellData.getValue().getNimiProperty());
+
+            alueTableView.getColumns().addAll(alueIDColumn, nimiColumn);
+
+            // Aseta TableView näkyväksi
+            pane.setCenter(alueTableView);
+
+            alueIkkuna.show();
+
+            Button lisaaAlue = new Button("Lisää");
+            Button poistaAlue = new Button("Poista");
+
+            // Aseta napit VBoxiin
+            VBox buttonBox = new VBox(lisaaAlue, poistaAlue);
+            buttonBox.setAlignment(Pos.CENTER);
+            buttonBox.setPadding(new Insets(15, 15, 15, 15));
+            buttonBox.setSpacing(10);
+
+            // Aseta VBox vasempaan reunaan
+            pane.setLeft(buttonBox);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+
+        }
     }
 }
