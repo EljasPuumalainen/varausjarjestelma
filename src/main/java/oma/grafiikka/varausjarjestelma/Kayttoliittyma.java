@@ -11,11 +11,13 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
-
+import javafx.application.Platform;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import javafx.scene.control.SelectionMode;
+
 
 
 public class Kayttoliittyma extends Application {
@@ -65,7 +67,11 @@ public class Kayttoliittyma extends Application {
         });
         // Asiakkaiden hallinta ikkuna
         asikkaidenHallinta.setOnAction(e -> {
-            asiakkaidenHallintaIkkuna();
+            try {
+                asiakkaidenHallintaIkkuna();
+            } catch (ClassNotFoundException ex) {
+                throw new RuntimeException(ex);
+            }
         });
 
         // Palveluiden hallinta ikkuna
@@ -97,13 +103,16 @@ public class Kayttoliittyma extends Application {
         return hBox;
     }
 
-    public void asiakkaidenHallintaIkkuna() {
+    public void asiakkaidenHallintaIkkuna() throws ClassNotFoundException {
+        Asiakas asiakas = new Asiakas();
 
-        // Luo uusi Borderpane
-
+        // Luo uusi Borderpane ja textarea
         BorderPane pane = new BorderPane();
         TextArea tiedot = new TextArea();
-        ListView<String> lista = new ListView<>();
+        tiedot.setEditable(false);
+        tiedot.setFont(Font.font(15));
+
+        ListView<String> asiakasLista = new ListView<>(asiakas.asiakas.get());
 
         // Luo uusi Stage-olio
         Stage asiakasHallinta = new Stage();
@@ -111,18 +120,19 @@ public class Kayttoliittyma extends Application {
 
         // Luo buttonit ikkunaan
         Button lisaaAsiakas = new Button("Lisää asiakas");
-        Button muokkaaAsiakas = new Button("Muokkaa asiakkaan tietoja");
+
         Button poistaAsiakas = new Button("Poista asiakas");
+        Button tarkistaTiedot = new Button("Tarkista tiedot");
 
         // Luo VBox painikkeille ja aseta ne vasemmalle
         VBox painikeVBox = new VBox(15);
         painikeVBox.setPadding(new Insets(15, 15, 15, 15));
-        painikeVBox.getChildren().addAll(lisaaAsiakas, muokkaaAsiakas, poistaAsiakas);
+        painikeVBox.getChildren().addAll(lisaaAsiakas, poistaAsiakas, tarkistaTiedot);
         pane.setRight(painikeVBox);
 
         // Aseta TextArea ja ListView BorderPaneen
         pane.setCenter(tiedot);
-        pane.setLeft(lista);
+        pane.setLeft(asiakasLista);
 
         // Aseta uusi Scene Stageen ja näytä ikkuna
         asiakasHallinta.setScene(kehys);
@@ -133,24 +143,28 @@ public class Kayttoliittyma extends Application {
         lisaaAsiakas.setOnMouseClicked(e -> {
             Stage lisaaAsiakasStage = new Stage();
             GridPane lisaaAsiakasPane = new GridPane();
-            Scene lisaaAsiakasScene = new Scene(lisaaAsiakasPane, 300, 300);
+            Scene lisaaAsiakasScene = new Scene(lisaaAsiakasPane, 300,300);
             lisaaAsiakasStage.setScene(lisaaAsiakasScene);
             lisaaAsiakasStage.show();
             lisaaAsiakasPane.setVgap(5);
 
             // Lisää labelit ikkunaan
-            lisaaAsiakasPane.add(new Label("Etunimi: "), 0, 0);
+            lisaaAsiakasPane.add(new Label("Etunimi: "), 0,0);
             lisaaAsiakasPane.add(new Label("Sukunimi:"), 0, 1);
             lisaaAsiakasPane.add(new Label("Lähiosoite: "), 0, 2);
             lisaaAsiakasPane.add(new Label("Postinumero: "), 0, 3);
-            lisaaAsiakasPane.add(new Label("Sähköposti: "), 0, 4);
-            lisaaAsiakasPane.add(new Label("Puhelinnumero: "), 0, 5);
+            lisaaAsiakasPane.add(new Label("postitoimipaikka: "),0, 4);
+            lisaaAsiakasPane.add(new Label("Sähköposti: "), 0, 5);
+            lisaaAsiakasPane.add(new Label("Puhelinnumero: "), 0, 6);
 
             // Luo textfieldit
             TextField etunimi = new TextField();
             TextField sukunimi = new TextField();
             TextField lahiosoite = new TextField();
+
             TextField postinumero = new TextField();
+            TextField postitoimipaikka = new TextField();
+
             TextField sahkoposti = new TextField();
             TextField puhelinnumero = new TextField();
 
@@ -159,19 +173,56 @@ public class Kayttoliittyma extends Application {
 
             // Lisää textfieldit ja button ikkunaan
             lisaaAsiakasPane.add(etunimi, 1, 0);
-            lisaaAsiakasPane.add(sukunimi, 1, 1);
-            lisaaAsiakasPane.add(lahiosoite, 1, 2);
+            lisaaAsiakasPane.add(sukunimi, 1,1);
+            lisaaAsiakasPane.add(lahiosoite, 1,2);
             lisaaAsiakasPane.add(postinumero, 1, 3);
-            lisaaAsiakasPane.add(sahkoposti, 1, 4);
-            lisaaAsiakasPane.add(puhelinnumero, 1, 5);
-            lisaaAsiakasPane.add(tallennaAsiakas, 1, 6);
+            lisaaAsiakasPane.add(postitoimipaikka, 1, 4);
+            lisaaAsiakasPane.add(sahkoposti, 1,5);
+            lisaaAsiakasPane.add(puhelinnumero, 1, 6);
+            lisaaAsiakasPane.add(tallennaAsiakas, 1, 7);
 
+            tallennaAsiakas.setOnAction(a -> {
+
+                asiakas.kirjoitaPostiTiedot(postinumero.getText(), postitoimipaikka.getText());
+
+                asiakas.kirjoitaAsiakasTiedot(postinumero.getText(), etunimi.getText(), sukunimi.getText(),
+                        lahiosoite.getText(), sahkoposti.getText(), puhelinnumero.getText());
+
+                Platform.runLater(() -> {
+                    asiakasLista.setItems(asiakas.asiakas.get());
+                });
+
+                asiakasHallinta.show();
+                lisaaAsiakasStage.close();
+
+            });
             lisaaAsiakasPane.setAlignment(Pos.CENTER);
             lisaaAsiakasStage.setTitle("Lisää asiakas");
-
         });
 
+        poistaAsiakas.setOnAction(p -> {
 
+            String nimi = asiakasLista.getSelectionModel().getSelectedItem();
+
+            String[] nimiOsat = nimi.split(" ");
+            String etunimi = nimiOsat[0];
+            String sukunimi = nimiOsat[1];
+
+            asiakas.poistaAsiakas(etunimi, sukunimi);
+
+            asiakasLista.getItems().remove(nimi);
+        });
+
+        tarkistaTiedot.setOnAction(t -> {
+            String valittu = asiakasLista.getSelectionModel().getSelectedItem();
+
+            String[] nimiOsat = valittu.split(" ");
+            String etunimi = nimiOsat[0];
+            String sukunimi = nimiOsat[1];
+
+            tiedot.setText(asiakas.haeTiedot(etunimi, sukunimi).getText());
+
+        });
     }
 
     /**
@@ -212,13 +263,13 @@ public class Kayttoliittyma extends Application {
         lisaaPalvelu.setOnMouseClicked(e -> {
             Stage lisaaMokkiStage = new Stage();
             GridPane lisaaMokkiPane = new GridPane();
-            Scene lisaaMokkiScene = new Scene(lisaaMokkiPane, 300, 300);
+            Scene lisaaMokkiScene = new Scene(lisaaMokkiPane, 300,300);
             lisaaMokkiStage.setScene(lisaaMokkiScene);
             lisaaMokkiStage.show();
             lisaaMokkiPane.setVgap(5);
 
             // Luo labelit
-            lisaaMokkiPane.add(new Label("Palvelun nimi: "), 0, 0);
+            lisaaMokkiPane.add(new Label("Palvelun nimi: "), 0,0);
             lisaaMokkiPane.add(new Label("Hinta:"), 0, 1);
 
             // Luo textfieldit
@@ -229,9 +280,9 @@ public class Kayttoliittyma extends Application {
             Button tallennaPalvelu = new Button("Tallenna");
 
             // Lisää tiedot ikkunaan
-            lisaaMokkiPane.add(palvelunNimi, 1, 0);
-            lisaaMokkiPane.add(hinta, 1, 1);
-            lisaaMokkiPane.add(tallennaPalvelu, 1, 2);
+            lisaaMokkiPane.add(palvelunNimi, 1,0);
+            lisaaMokkiPane.add(hinta, 1,1);
+            lisaaMokkiPane.add(tallennaPalvelu, 1,2);
 
             lisaaMokkiPane.setAlignment(Pos.CENTER);
             lisaaMokkiStage.setTitle("Lisää palvelu");
@@ -363,7 +414,6 @@ public class Kayttoliittyma extends Application {
             TableColumn<Mokki, String> varusteluColumn = new TableColumn<>("Varustelu");
             varusteluColumn.setCellValueFactory(cellData -> cellData.getValue().getVarusteluProperty());
 
-
             mokkiTableView.getColumns().addAll(nimiColumn, katuosoiteColumn, postinumeroColumn, hintaColumn, henkilomaaraColumn, varusteluColumn);
 
             // Haetaan tiedot tietokannasta
@@ -387,6 +437,11 @@ public class Kayttoliittyma extends Application {
             pane.setLeft(buttonBox);
 
             mokkiIkkuna.show();
+
+            //Alueiden combobox
+            ComboBox<String> alueComboBox = new ComboBox<>();
+            ObservableList<String> alueet = FXCollections.observableArrayList("Ruka", "Tahko", "Ylläs");
+            alueComboBox.setItems(alueet);
 
             lisaaMokki.setOnMouseClicked(e -> {
                 Stage lisaaMokkiStage = new Stage();
@@ -414,9 +469,6 @@ public class Kayttoliittyma extends Application {
 
                 Button lisaaMokki2 = new Button("Lisää mökki");
 
-                //Alueiden combobox
-                ComboBox<String> alueComboBox = new ComboBox<>();
-                alueComboBox.getItems().addAll("Ruka", "Tahko", "Ylläs");
 
                 lisaaMokkiPane.add(new Label("Alue"), 0, 7);
                 lisaaMokkiPane.add(alueComboBox, 1, 7);
@@ -436,11 +488,11 @@ public class Kayttoliittyma extends Application {
                 // Luo lisaaMokki buttonille toiminto
                 lisaaMokki2.setOnAction(ev -> {
                     try {
-                        // Tarkista, että kaikki tekstikentät ovat täytettyjä ennen tietojen tallentamista
+                        // Tarkista, että kaikki kentät ovat täytettyjä ennen tietojen tallentamista
                         if (!postinumero.getText().isEmpty() && !nimi.getText().isEmpty()
                                 && !katuosoite.getText().isEmpty() && !hinta.getText().isEmpty()
                                 && !kuvaus.getText().isEmpty() && !henkilomaara.getText().isEmpty()
-                                && !varustelu.getText().isEmpty()) {
+                                && !varustelu.getText().isEmpty() && alueComboBox.getValue() != null) {
 
                             // Luo uusi Mokki-olio syötetyillä tiedoilla
                             Mokki uusiMokki = new Mokki(
@@ -450,34 +502,46 @@ public class Kayttoliittyma extends Application {
                                     Double.parseDouble(hinta.getText()),
                                     kuvaus.getText(),
                                     Integer.parseInt(henkilomaara.getText()),
-                                    varustelu.getText()
+                                    varustelu.getText(),
+                                    alueComboBox.getSelectionModel().getSelectedItem() // Lisätään valittu alue Mokki-oliolle
                             );
-
 
                             // Lisää Mokki tietokantaan
                             Mokki.lisaaMokkiTietokantaan(connection, uusiMokki);
 
                             // Päivitä TableView hakeaksesi uudet tiedot tietokannasta
                             mokkiTableView.setItems(Mokki.haeMokitTietokannasta(connection));
-                        } else {
-                            // Jos jotkin kentät ovat tyhjiä, näytä ilmoitus
-                            Alert alert = new Alert(Alert.AlertType.WARNING);
-                            alert.setTitle("Tietojen puuttuminen");
-                            alert.setHeaderText(null);
-                            alert.setContentText("Kaikkia kenttiä on täytettävä ennen lisäämistä.");
-                            alert.showAndWait();
-                        }
+                        }  mokkiTableView.setItems(Mokki.haeMokitTietokannasta(connection));
+
                     } catch (SQLException | NumberFormatException ex) {
                         ex.printStackTrace();
                         // Voit lisätä tässä käyttöliittymässä ilmoituksen virheestä, esim. Alert
                     }
                 });
-
-
             });
+
+            poistaNappi.setOnAction(e -> {
+                // Hae valittu mökki
+                Mokki valittuMokki = mokkiTableView.getSelectionModel().getSelectedItem();
+                if (valittuMokki != null) {
+                    try {
+                        // Kutsu poistometodia ja välitä tietokantayhteys sekä valitun mökin postinumero
+                        Mokki.poistaMokkiTietokannasta(connection, valittuMokki.getPostinro());
+
+                        // Poista valittu mökki myös TableView:sta
+                        mokkiTableView.getItems().remove(valittuMokki);
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                        // Käsittele virhe
+                    }
+                } else {
+                    // Jos mitään ei ole valittu, näytä ilmoitus käyttäjälle
+                    System.out.println("Valitse ensin mökki, jonka haluat poistaa.");
+                }
+            });
+
         } catch (SQLException e) {
             e.printStackTrace();
-
         }
     }
 
@@ -501,8 +565,12 @@ public class Kayttoliittyma extends Application {
             TableColumn<Alue, String> nimiColumn = new TableColumn<>("Alueen nimi");
             nimiColumn.setCellValueFactory(cellData -> cellData.getValue().getNimiProperty());
 
-
             alueTableView.getColumns().addAll(alueIDColumn, nimiColumn);
+
+            // Haetaan tiedot tietokannasta
+            ObservableList<Alue> alueet = Alue.haeAlueetTietokannasta(connection);
+            alueTableView.setItems(alueet);
+
 
             // Aseta TableView näkyväksi
             pane.setCenter(alueTableView);
@@ -557,18 +625,28 @@ public class Kayttoliittyma extends Application {
 
                             // Päivitä TableView hakeaksesi uudet tiedot tietokannasta
                             alueTableView.setItems(Alue.haeAlueetTietokannasta(connection));
-                        }
+                        } alueTableView.setItems(Alue.haeAlueetTietokannasta(connection));
+
                     } catch (SQLException | NumberFormatException ex) {
                         ex.printStackTrace();
-                        // Voit lisätä tässä käyttöliittymässä ilmoituksen virheestä, esim. Alert
                     }
                 });
 
+                poistaAlue.setOnAction(ev -> {
+                    Alue valittuAlue = (Alue) alueTableView.getSelectionModel().getSelectedItem();
+                    if (valittuAlue != null) {
+                        try {
+                            valittuAlue.poistaAlueTietokannasta(connection);
+                            alueTableView.getItems().remove(valittuAlue);
+                        } catch (SQLException ex) {
+                            ex.printStackTrace();
+                        }
+                    }
+                });
             });
 
         } catch (SQLException e) {
             e.printStackTrace();
-
         }
     }
 }

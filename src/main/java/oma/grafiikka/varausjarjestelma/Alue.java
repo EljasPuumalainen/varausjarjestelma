@@ -56,4 +56,13 @@ public class Alue {
             preparedStatement.executeUpdate();
         }
     }
+
+    public void poistaAlueTietokannasta(Connection connection) throws SQLException {
+        String sql = "DELETE FROM alue WHERE alue_id = ?";
+        try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setInt(1, this.alueId);
+            preparedStatement.executeUpdate();
+        }
+    }
+
 }
