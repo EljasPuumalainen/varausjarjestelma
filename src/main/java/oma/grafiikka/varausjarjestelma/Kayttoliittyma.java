@@ -343,7 +343,6 @@ public class Kayttoliittyma extends Application {
         varauspane.add(endDatePicker, 1, 4);
         varauspane.add(vahvista, 0,5);
 
-
         varauspane.setAlignment(Pos.CENTER);
 
         Scene varaaScene = new Scene(varauspane, 500, 500);
@@ -359,11 +358,8 @@ public class Kayttoliittyma extends Application {
             ilmoitus.setHeaderText("TYHMÄ");
             ilmoitus.setTitle("AHHAHHAHAHAHHAHHA");
             ilmoitus.show();
-
         });
     }
-
-
 
     /**
      * Mökkien hallinta stage ja sen ominaisuudet/toiminnot
