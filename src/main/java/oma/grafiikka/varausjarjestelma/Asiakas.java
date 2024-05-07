@@ -1,4 +1,5 @@
 package oma.grafiikka.varausjarjestelma;
+
 import javafx.beans.property.ReadOnlyListProperty;
 import javafx.beans.property.SimpleListProperty;
 import javafx.collections.FXCollections;
@@ -16,7 +17,7 @@ public class Asiakas {
 
     private static final String JDBC_URL = "jdbc:mysql://localhost:3306/vn";
     private static final String USER = "root";
-    private static final String PASSWORD = "KISSAmies5";
+    private static final String PASSWORD = "root";
 
     public ObservableList<String> asiakasdata = FXCollections.observableArrayList();
     public ReadOnlyListProperty<String> asiakas = new SimpleListProperty<>(asiakasdata);
