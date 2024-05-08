@@ -11,28 +11,21 @@ import java.sql.*;
 
 public class Alue {
 
-    private final int alueId;
-    private final String nimi;
 
-    public Alue(int alueId, String nimi) {
-        this.alueId = alueId;
-        this.nimi = nimi;
+    private final StringProperty nimi;
+
+    public Alue(String nimi) {
+
+        this.nimi = new SimpleStringProperty(nimi);
     }
 
-    public int getAlueId() {
-        return alueId;
-    }
 
     public String getNimi() {
+        return nimi.get();
+    }
+
+    public StringProperty nimiProperty() {
         return nimi;
-    }
-
-    public IntegerProperty getAlueIdProperty() {
-        return new SimpleIntegerProperty(alueId);
-    }
-
-    public StringProperty getNimiProperty() {
-        return new SimpleStringProperty(nimi);
     }
 
     public static ObservableList<Alue> haeAlueetTietokannasta(Connection connection) throws SQLException {
@@ -40,29 +33,26 @@ public class Alue {
         Statement statement = connection.createStatement();
         ResultSet resultSet = statement.executeQuery("SELECT * FROM alue");
         while (resultSet.next()) {
-            int alueId = resultSet.getInt("alue_id");
             String nimi = resultSet.getString("nimi");
-            Alue alue = new Alue(alueId, nimi);
+            Alue alue = new Alue( nimi);
             alueet.add(alue);
         }
         return alueet;
     }
 
     public void lisaaAlueTietokantaan(Connection connection) throws SQLException {
-        String sql = "INSERT INTO alue (alue_id, nimi) VALUES (?, ?)";
+        String sql = "INSERT INTO alue (nimi) VALUES (?)";
         try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setInt(1, this.alueId);
-            preparedStatement.setString(2, this.nimi);
+            preparedStatement.setString(1, this.nimi.get());
             preparedStatement.executeUpdate();
         }
     }
 
     public void poistaAlueTietokannasta(Connection connection) throws SQLException {
-        String sql = "DELETE FROM alue WHERE alue_id = ?";
+        String sql = "DELETE FROM alue WHERE nimi = ?";
         try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setInt(1, this.alueId);
+            preparedStatement.setString(1, this.nimi.get());
             preparedStatement.executeUpdate();
         }
     }
-
 }
