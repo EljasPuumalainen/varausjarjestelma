@@ -34,6 +34,7 @@ public class Kayttoliittyma extends Application {
     private Button alueidenHallinta = new Button("Alueiden hallinta");
     private Button palveluidenHallinta = new Button("Palveluiden hallinta");
     private TableView<Mokki> mokkiTableView = new TableView<>();
+    private ComboBox<String> alueComboBox = new ComboBox<>();
 
     @Override
     public void start(Stage primaryStage) {
@@ -82,6 +83,22 @@ public class Kayttoliittyma extends Application {
         alueidenHallinta.setOnAction(e -> {
             alueidenHallintaIkkuna();
         });
+
+        try {
+            // Avaa tietokantayhteys
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/vn", "root", "root");
+
+            // Haetaan alueet tietokannasta
+            ObservableList<Alue> alueet = Alue.haeAlueetTietokannasta(connection);
+
+            // Lisää alueiden nimet alueComboBoxiin
+            for (Alue alue : alueet) {
+                alueComboBox.getItems().add(alue.getNimi());
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -414,11 +431,19 @@ public class Kayttoliittyma extends Application {
             TableColumn<Mokki, String> varusteluColumn = new TableColumn<>("Varustelu");
             varusteluColumn.setCellValueFactory(cellData -> cellData.getValue().getVarusteluProperty());
 
-            mokkiTableView.getColumns().addAll(nimiColumn, katuosoiteColumn, postinumeroColumn, hintaColumn, henkilomaaraColumn, varusteluColumn);
+            mokkiTableView.getColumns().addAll(postinumeroColumn, nimiColumn, katuosoiteColumn, hintaColumn, kuvausColumn,
+                    henkilomaaraColumn, varusteluColumn);
 
             // Haetaan tiedot tietokannasta
             ObservableList<Mokki> mokit = Mokki.haeMokitTietokannasta(connection);
             mokkiTableView.setItems(mokit);
+
+            ObservableList<Alue> alueet = Alue.haeAlueetTietokannasta(connection);
+            alueComboBox.getItems().clear(); // Tyhjennetään ComboBox ensin
+            for (Alue alue : alueet) {
+                alueComboBox.getItems().add(alue.getNimi());
+            }
+
 
             // Aseta TableView BorderPaneen
             pane.setCenter(mokkiTableView);
@@ -439,9 +464,7 @@ public class Kayttoliittyma extends Application {
             mokkiIkkuna.show();
 
             //Alueiden combobox
-            ComboBox<String> alueComboBox = new ComboBox<>();
-            ObservableList<String> alueet = FXCollections.observableArrayList("Ruka", "Tahko", "Ylläs");
-            alueComboBox.setItems(alueet);
+
 
             lisaaMokki.setOnMouseClicked(e -> {
                 Stage lisaaMokkiStage = new Stage();
@@ -559,17 +582,21 @@ public class Kayttoliittyma extends Application {
 
             TableView alueTableView = new TableView<>();
 
-            TableColumn<Alue, Integer> alueIDColumn = new TableColumn<>("Alue ID");
-            alueIDColumn.setCellValueFactory(cellData -> cellData.getValue().getAlueIdProperty().asObject());
 
             TableColumn<Alue, String> nimiColumn = new TableColumn<>("Alueen nimi");
-            nimiColumn.setCellValueFactory(cellData -> cellData.getValue().getNimiProperty());
+            nimiColumn.setCellValueFactory(cellData -> cellData.getValue().nimiProperty());
 
-            alueTableView.getColumns().addAll(alueIDColumn, nimiColumn);
+            alueTableView.getColumns().addAll(nimiColumn);
 
             // Haetaan tiedot tietokannasta
             ObservableList<Alue> alueet = Alue.haeAlueetTietokannasta(connection);
             alueTableView.setItems(alueet);
+
+            ObservableList<String> alueetNimet = FXCollections.observableArrayList();
+            for (Alue alue : alueet) {
+                alueetNimet.add(alue.getNimi());
+            }
+            alueComboBox.setItems(alueetNimet);
 
 
             // Aseta TableView näkyväksi
@@ -597,52 +624,52 @@ public class Kayttoliittyma extends Application {
                 lisaaAlueStage.show();
                 pane1.setVgap(5);
 
-                pane1.add(new Label("Alue ID: "), 0, 0);
-                pane1.add(new Label("Nimi: "), 0, 1);
+                pane1.add(new Label("Nimi: "), 0, 0);
 
-                TextField alueID = new TextField();
                 TextField nimi = new TextField();
 
-                pane1.add(alueID, 1, 0);
-                pane1.add(nimi, 1, 1);
+                pane1.add(nimi, 1, 0);
 
                 pane1.setAlignment(Pos.CENTER);
                 lisaaAlueStage.setTitle("Lisää Alue");
 
                 Button lisaaAlueBT = new Button("Lisää Alue");
 
-                pane1.add(lisaaAlueBT, 1,2);
+                pane1.add(lisaaAlueBT, 1,1);
 
                 lisaaAlueBT.setOnAction(ev -> {
                     try {
-                        // Tarkista, että kaikki kentät ovat täytettyjä ennen tietojen tallentamista
-                        if (!alueID.getText().isEmpty() && !nimi.getText().isEmpty()) {
-                            // Luo uusi Alue-olio syötetyillä tiedoilla
-                            Alue uusiAlue = new Alue(Integer.parseInt(alueID.getText()), nimi.getText());
+                        // Tarkista, että nimi-kenttä on täytetty ennen tietojen tallentamista
+                        if (!nimi.getText().isEmpty()) {
+                            // Luo uusi Alue-olio syötetyllä nimellä
+                            Alue uusiAlue = new Alue(nimi.getText());
 
                             // Lisää Alue tietokantaan
                             uusiAlue.lisaaAlueTietokantaan(connection);
+
+                            alueComboBox.getItems().add(uusiAlue.getNimi());
+
 
                             // Päivitä TableView hakeaksesi uudet tiedot tietokannasta
                             alueTableView.setItems(Alue.haeAlueetTietokannasta(connection));
                         } alueTableView.setItems(Alue.haeAlueetTietokannasta(connection));
 
-                    } catch (SQLException | NumberFormatException ex) {
+                    } catch (SQLException ex) {
                         ex.printStackTrace();
                     }
                 });
+            });
 
-                poistaAlue.setOnAction(ev -> {
-                    Alue valittuAlue = (Alue) alueTableView.getSelectionModel().getSelectedItem();
-                    if (valittuAlue != null) {
-                        try {
-                            valittuAlue.poistaAlueTietokannasta(connection);
-                            alueTableView.getItems().remove(valittuAlue);
-                        } catch (SQLException ex) {
-                            ex.printStackTrace();
-                        }
+            poistaAlue.setOnAction(ev -> {
+                Alue valittuAlue = (Alue) alueTableView.getSelectionModel().getSelectedItem();
+                if (valittuAlue != null) {
+                    try {
+                        valittuAlue.poistaAlueTietokannasta(connection);
+                        alueTableView.getItems().remove(valittuAlue);
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
                     }
-                });
+                }
             });
 
         } catch (SQLException e) {
