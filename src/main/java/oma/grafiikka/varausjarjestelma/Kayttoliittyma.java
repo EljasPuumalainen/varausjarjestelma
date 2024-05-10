@@ -86,7 +86,7 @@ public class Kayttoliittyma extends Application {
 
         try {
             // Avaa tietokantayhteys
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/vn", "root", "root");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/vn", "root", "Karhukukkonen0232");
 
             // Haetaan alueet tietokannasta
             ObservableList<Alue> alueet = Alue.haeAlueetTietokannasta(connection);
@@ -246,10 +246,18 @@ public class Kayttoliittyma extends Application {
      * palveluiden hallinta metodi
      */
     public void palveluidenHallintaIkkuna() {
+        PalveluidenHallinta palveluidenHallinta1 = new PalveluidenHallinta();
+        // Avaa tietokanta yhteys
+        try {
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/vn", "root", "Karhukukkonen0232");
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
         // Luo uusi BorderPane
         BorderPane pane = new BorderPane();
         TextArea tiedot = new TextArea();
-        ListView<String> lista = new ListView<>();
+        ListView<String> lista = new ListView<>(palveluidenHallinta1.palvelu.get());
 
         // Luo uusi Stage-olio
         Stage palveluidenHallinta = new Stage();
@@ -257,13 +265,13 @@ public class Kayttoliittyma extends Application {
 
         // Luo buttonit ikkunaan
         Button lisaaPalvelu = new Button("Lisää palvelu");
-        Button muokkaaPalvelua = new Button("Muokkaa palveluita");
+        Button haePalvelunTiedot1 = new Button("Hae palvelun tiedot");
         Button poistaPalvelu = new Button("Poista palvelu");
 
         // Luo VBox painikkeille ja aseta ne vasemmalle
         VBox painikeVBox = new VBox(15);
         painikeVBox.setPadding(new Insets(15, 15, 15, 15));
-        painikeVBox.getChildren().addAll(lisaaPalvelu, muokkaaPalvelua, poistaPalvelu);
+        painikeVBox.getChildren().addAll(lisaaPalvelu, haePalvelunTiedot1, poistaPalvelu);
         pane.setRight(painikeVBox);
 
         // Aseta TextArea ja ListView BorderPaneen
@@ -286,26 +294,74 @@ public class Kayttoliittyma extends Application {
             lisaaMokkiPane.setVgap(5);
 
             // Luo labelit
-            lisaaMokkiPane.add(new Label("Palvelun nimi: "), 0,0);
-            lisaaMokkiPane.add(new Label("Hinta:"), 0, 1);
+            lisaaMokkiPane.add(new Label(" Palvelu ID: "), 0, 0);
+            lisaaMokkiPane.add(new Label("Valitse alue: "), 0, 1);
+            lisaaMokkiPane.add(new Label("Palvelun nimi: "), 0,2);
+            lisaaMokkiPane.add(new Label("Arvolisäveroton:"), 0, 3);
+            lisaaMokkiPane.add(new Label("Kuvaus: "), 0, 4);
+            lisaaMokkiPane.add(new Label("Alv: "), 0, 5);
+
+
+
+
 
             // Luo textfieldit
+            TextField id = new TextField();
+            TextField alueId = new TextField();
             TextField palvelunNimi = new TextField();
-            TextField hinta = new TextField();
+            TextField kuvaus = new TextField();
+            TextField arvolisatonVero = new TextField();
+            TextField alv = new TextField();
 
 
+            // Luo buttonit käyttöliittymään
             Button tallennaPalvelu = new Button("Tallenna");
 
-            // Lisää tiedot ikkunaan
-            lisaaMokkiPane.add(palvelunNimi, 1,0);
-            lisaaMokkiPane.add(hinta, 1,1);
-            lisaaMokkiPane.add(tallennaPalvelu, 1,2);
 
+            // Lisää tiedot ikkunaan
+            lisaaMokkiPane.add(id, 1, 0);
+            lisaaMokkiPane.add(alueComboBox, 1,1);
+            lisaaMokkiPane.add(palvelunNimi, 1,2);
+            lisaaMokkiPane.add(arvolisatonVero, 1,3);
+            lisaaMokkiPane.add(kuvaus, 1,4);
+            lisaaMokkiPane.add(alv, 1, 5);
+            lisaaMokkiPane.add(tallennaPalvelu, 1,6);
             lisaaMokkiPane.setAlignment(Pos.CENTER);
             lisaaMokkiStage.setTitle("Lisää palvelu");
 
+            // Luo tallennaPalvelu buttonille toiminto
+            tallennaPalvelu.setOnAction(event -> {
+                double alvi = Double.parseDouble(arvolisatonVero.getText()) * 0.24;
+                double loppusumma = Double.parseDouble(arvolisatonVero.getText()) + alvi;
+                palveluidenHallinta1.lisaaPalvelu(Integer.parseInt(id.getText()), alueComboBox.getValue(),
+                        palvelunNimi.getText(), kuvaus.getText(), Double.parseDouble(arvolisatonVero.getText()), loppusumma);
+
+                Platform.runLater(() -> {
+                    lista.setItems(palveluidenHallinta1.palvelu.get());
+                });
+
+
+            });
+
+        });
+        poistaPalvelu.setOnAction(event -> {
+            String nimi = lista.getSelectionModel().getSelectedItem();
+            if (nimi != null) {
+                palveluidenHallinta1.poistaPalvelu(nimi);
+                lista.getItems().remove(nimi);
+                lista.refresh();
+            } else {
+                System.out.println("Valitse palvelu, jota haluat poistaa.");
+            }
+
+
+        });
+        haePalvelunTiedot1.setOnAction(event -> {
+            String nimi = lista.getSelectionModel().getSelectedItem();
+            tiedot.setText(palveluidenHallinta1.haePalvelunTiedot(nimi).getText());
         });
     }
+
 
     /**
      * Varauksen teko ikkuna
@@ -354,6 +410,7 @@ public class Kayttoliittyma extends Application {
             varaaStage.close();
 
         });
+
     }
 
     /**
@@ -400,7 +457,7 @@ public class Kayttoliittyma extends Application {
     public void mokkienHallinta() {
         try {
             // Avaa tietokantayhteys
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/vn", "root", "root");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/vn", "root", "Karhukukkonen0232");
 
             Stage mokkiIkkuna = new Stage();
             BorderPane pane = new BorderPane();
@@ -572,7 +629,7 @@ public class Kayttoliittyma extends Application {
 
         try {
             // Avaa tietokantayhteys
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/vn", "root", "root");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/vn", "root", "Karhukukkonen0232");
 
             Stage alueIkkuna = new Stage();
             BorderPane pane = new BorderPane();
