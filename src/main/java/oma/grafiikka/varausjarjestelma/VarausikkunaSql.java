@@ -9,7 +9,7 @@ public class VarausikkunaSql {
 
     private static final String JDBC_URL = "jbcd:mysql://localhost:3306/vn";
     private static final String USER = "root";
-    private static final String PASSWORD = "KISSAmies5";
+    private static final String PASSWORD = "root";
 
     public ObservableList<String> varaukset = FXCollections.observableArrayList();
 
