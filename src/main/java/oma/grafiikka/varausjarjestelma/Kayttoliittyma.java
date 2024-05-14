@@ -32,6 +32,8 @@ public class Kayttoliittyma extends Application {
     private Button mokkienHallinta = new Button("Mökkien hallinta");
     private Button alueidenHallinta = new Button("Alueiden hallinta");
     private Button palveluidenHallinta = new Button("Palveluiden hallinta");
+    private Button lasku = new Button("Laskujen seuranta");
+
     private TableView<Mokki> mokkiTableView = new TableView<>();
     private ComboBox<String> alueComboBox = new ComboBox<>();
 
@@ -98,6 +100,11 @@ public class Kayttoliittyma extends Application {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
+        lasku.setOnAction(e -> {
+            LaskujenSeuranta();
+        });
+
     }
 
     /**
@@ -113,7 +120,7 @@ public class Kayttoliittyma extends Application {
         HBox hBox = new HBox(15);
 
         hBox.getChildren().addAll(varaustenHallinta, asikkaidenHallinta, mokkienHallinta, alueidenHallinta,
-                palveluidenHallinta);
+                palveluidenHallinta, lasku);
         hBox.setAlignment(Pos.CENTER);
 
         return hBox;
@@ -731,4 +738,43 @@ public class Kayttoliittyma extends Application {
             e.printStackTrace();
         }
     }
+
+    public void LaskujenSeuranta(){
+
+        LaskujenHallinta laskuja = new LaskujenHallinta();
+        laskuja.teeKysely();
+
+        Stage laskuStage = new Stage();
+        BorderPane laskuPaneeli = new BorderPane();
+
+        ListView<String> laskuLista = new ListView<>(laskuja.laskut.get());
+        TextField haeNimella = new TextField("Hae lasku nimellä");
+        Button tarkista = new Button("katso tiedot");
+        VBox boksi = new VBox(haeNimella, tarkista);
+        boksi.setPadding(new Insets(160,15,15,15));
+        laskuPaneeli.setRight(boksi);
+
+        laskuPaneeli.setLeft(laskuLista);
+
+        TextArea laskut = new TextArea();
+        laskuPaneeli.setCenter(laskut);
+
+        laskuLista.scrollTo(haeNimella.getText());
+
+        Scene laskuScene = new Scene(laskuPaneeli,900, 500);
+        laskuStage.setScene(laskuScene);
+        laskuStage.setTitle("laskujenhallinta ikkuna");
+        laskuStage.show();
+
+        tarkista.setOnAction(e -> {
+            String valittu = laskuLista.getSelectionModel().getSelectedItem();
+
+            String[] nimiOsat = valittu.split(" ");
+            String etunimi = nimiOsat[0];
+            String sukunimi = nimiOsat[1];
+
+            haeNimella.setText(laskuja.haeLaskuTiedot(etunimi, sukunimi).getText());
+        });
+    }
+
 }
