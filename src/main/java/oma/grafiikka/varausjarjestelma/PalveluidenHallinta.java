@@ -12,7 +12,7 @@ import java.sql.*;
 public class PalveluidenHallinta {
     private static final String JDBC_URL = "jdbc:mysql://localhost:3306/vn";
     private static final String USER = "root";
-    private static final String PASSWORD = "Karhukukkonen0232";
+    private static final String PASSWORD = "KISSAmies5";
 
     public ObservableList<String> palveluidenData = FXCollections.observableArrayList();
     public ReadOnlyListProperty<String> palvelu = new SimpleListProperty<>(palveluidenData);
