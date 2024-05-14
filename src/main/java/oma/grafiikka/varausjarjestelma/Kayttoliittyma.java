@@ -14,9 +14,8 @@ import javafx.stage.Stage;
 import javafx.application.Platform;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
+
 import java.sql.SQLException;
-import javafx.scene.control.SelectionMode;
 
 
 
@@ -86,7 +85,7 @@ public class Kayttoliittyma extends Application {
 
         try {
             // Avaa tietokantayhteys
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/vn", "root", "root");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/vn", "root", "KISSAmies5");
 
             // Haetaan alueet tietokannasta
             ObservableList<Alue> alueet = Alue.haeAlueetTietokannasta(connection);
@@ -457,7 +456,7 @@ public class Kayttoliittyma extends Application {
     public void mokkienHallinta() {
         try {
             // Avaa tietokantayhteys
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/vn", "root", "root");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/vn", "root", "KISSAmies5");
 
             Stage mokkiIkkuna = new Stage();
             BorderPane pane = new BorderPane();
@@ -628,7 +627,7 @@ public class Kayttoliittyma extends Application {
 
         try {
             // Avaa tietokantayhteys
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/vn", "root", "root");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/vn", "root", "KISSAmies5");
 
             Stage alueIkkuna = new Stage();
             BorderPane pane = new BorderPane();

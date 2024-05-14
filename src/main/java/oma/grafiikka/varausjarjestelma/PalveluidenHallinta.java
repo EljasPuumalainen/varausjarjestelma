@@ -12,7 +12,6 @@ import java.sql.*;
 public class PalveluidenHallinta {
     private static final String JDBC_URL = "jdbc:mysql://localhost:3306/vn";
     private static final String USER = "root";
-    private static final String PASSWORD = "root";
 
     public ObservableList<String> palveluidenData = FXCollections.observableArrayList();
     public ReadOnlyListProperty<String> palvelu = new SimpleListProperty<>(palveluidenData);
