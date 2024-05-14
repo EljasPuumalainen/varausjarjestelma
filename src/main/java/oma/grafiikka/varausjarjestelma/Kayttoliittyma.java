@@ -255,7 +255,7 @@ public class Kayttoliittyma extends Application {
         PalveluidenHallinta palveluidenHallinta1 = new PalveluidenHallinta();
         // Avaa tietokanta yhteys
         try {
-            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/vn", "root", "root");
+            connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/vn", "root", "KISSAmies5");
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -344,9 +344,10 @@ public class Kayttoliittyma extends Application {
 
                 Platform.runLater(() -> {
                     lista.setItems(palveluidenHallinta1.palvelu.get());
+
                 });
 
-
+                lisaaMokkiStage.close();
             });
 
         });
@@ -589,19 +590,22 @@ public class Kayttoliittyma extends Application {
                                     Integer.parseInt(henkilomaara.getText()),
                                     varustelu.getText(),
                                     alueComboBox.getSelectionModel().getSelectedItem() // Lisätään valittu alue Mokki-oliolle
+
+
                             );
 
                             // Lisää Mokki tietokantaan
                             Mokki.lisaaMokkiTietokantaan(connection, uusiMokki);
 
                             // Päivitä TableView hakeaksesi uudet tiedot tietokannasta
-                            mokkiTableView.setItems(Mokki.haeMokitTietokannasta(connection));
+                            mokkiTableView.setItems(Mokki.haeMokitTietokannasta(connection));lisaaMokkiStage.close();
                         }  mokkiTableView.setItems(Mokki.haeMokitTietokannasta(connection));
 
                     } catch (SQLException | NumberFormatException ex) {
                         ex.printStackTrace();
                         // Voit lisätä tässä käyttöliittymässä ilmoituksen virheestä, esim. Alert
                     }
+
                 });
             });
 
@@ -714,6 +718,7 @@ public class Kayttoliittyma extends Application {
 
                             // Päivitä TableView hakeaksesi uudet tiedot tietokannasta
                             alueTableView.setItems(Alue.haeAlueetTietokannasta(connection));
+                            lisaaAlueStage.close();
                         } alueTableView.setItems(Alue.haeAlueetTietokannasta(connection));
 
                     } catch (SQLException ex) {
