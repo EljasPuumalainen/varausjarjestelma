@@ -1,5 +1,6 @@
 package oma.grafiikka.varausjarjestelma;
 
+import javafx.beans.property.ListProperty;
 import javafx.beans.property.ReadOnlyListProperty;
 import javafx.beans.property.SimpleListProperty;
 import javafx.collections.FXCollections;
@@ -20,8 +21,14 @@ public class Asiakas {
     private static final String PASSWORD = "KISSAmies5";
 
     public ObservableList<String> asiakasdata = FXCollections.observableArrayList();
-    public ReadOnlyListProperty<String> asiakas = new SimpleListProperty<>(asiakasdata);
+    public ListProperty<String> asiakas = new SimpleListProperty<>(asiakasdata);
 
+    /**
+     * Asiakas luokan alustaja
+     * lukee tietokannasta etunimet ja sukunimet asiakas taulusta
+     * lisää ne ObservableListiiin, jotta ne nimet näkyvät listviewssä käyttöliittymässä
+     * @throws ClassNotFoundException
+     */
     public Asiakas() throws ClassNotFoundException {
         Class.forName("com.mysql.cj.jdbc.Driver");
         try (
@@ -114,21 +121,14 @@ public class Asiakas {
     }
 
     public void poistaAsiakas(String etunimi, String sukunimi) {
-
         try (Connection conn = DriverManager.getConnection(JDBC_URL, USER, PASSWORD)) {
-            // SQL-lause, joka poistaa asiakkaan tiedot
-            String sql = "DELETE FROM asiakas WHERE etunimi = ? AND sukunimi = ?";
 
-            // Valmistele lause
-            PreparedStatement statement = conn.prepareStatement(sql);
-
-            // Aseta parametrit
-            statement.setString(1, etunimi);
-            statement.setString(2, sukunimi);
-
-
-            // Suorita lause
-            int rowsAffected = statement.executeUpdate();
+            // Asiakas löytyi, poista hänet tietokannasta
+            String deleteQuery = "DELETE FROM asiakas WHERE etunimi = ? AND sukunimi = ?";
+            PreparedStatement deleteStatement = conn.prepareStatement(deleteQuery);
+            deleteStatement.setString(1, etunimi);
+            deleteStatement.setString(2, sukunimi);
+            int rowsAffected = deleteStatement.executeUpdate();
 
             if (rowsAffected > 0) {
                 System.out.println("Asiakkaan tiedot poistettu onnistuneesti.");
@@ -137,8 +137,11 @@ public class Asiakas {
             }
         } catch (SQLException e) {
             e.printStackTrace();
+        } finally {
+            paivitaAsiakasLista();
         }
     }
+
 
     public TextArea haeTiedot(String etunimi, String sukunimi) {
         TextArea tiijot = new TextArea();
@@ -167,6 +170,85 @@ public class Asiakas {
             e.printStackTrace();
         }
         return tiijot;
+    }
+
+    public void paivitaAsiakasLista() {
+        try (Connection conn = DriverManager.getConnection(JDBC_URL, USER, PASSWORD)) {
+            Statement statement = conn.createStatement();
+            ResultSet resultSet = statement.executeQuery("select etunimi, sukunimi from asiakas");
+
+            asiakasdata.clear(); // Tyhjennä lista ennen päivitystä
+
+            while (resultSet.next()) {
+                String column1 = resultSet.getString("etunimi");
+                String column2 = resultSet.getString("sukunimi");
+                asiakasdata.add(column1 + " " + column2);
+            }
+
+            // Päivitä ListProperty
+            asiakas.set(asiakasdata);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public ObservableList<String> haeAsiakasNimet() {
+        ObservableList<String> asiakasNimet = FXCollections.observableArrayList();
+
+        try (Connection conn = DriverManager.getConnection(JDBC_URL, USER, PASSWORD)) {
+            Statement statement = conn.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT etunimi, sukunimi FROM asiakas");
+
+            while (resultSet.next()) {
+                String etunimi = resultSet.getString("etunimi");
+                String sukunimi = resultSet.getString("sukunimi");
+                asiakasNimet.add(etunimi + " " + sukunimi);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return asiakasNimet;
+    }
+
+    public ObservableList<String> haeMokinNimet() {
+        ObservableList<String> mokinNimet = FXCollections.observableArrayList();
+
+        try (Connection conn = DriverManager.getConnection(JDBC_URL, USER, PASSWORD)) {
+            Statement statement = conn.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT mokkinimi FROM mokki");
+
+            while (resultSet.next()) {
+                String mokkinimi = resultSet.getString("mokkinimi");
+                mokinNimet.add(mokkinimi);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return mokinNimet;
+    }
+
+
+    public int haeAsiakasIdNimella(String etunimi, String sukunimi) {
+        int asiakasId = -1; // Oletusarvo, jos asiakasta ei löydy
+        String query = "SELECT asiakas_id FROM asiakas WHERE etunimi = ? AND sukunimi = ?";
+
+        try (Connection conn = DriverManager.getConnection(JDBC_URL, USER, PASSWORD);
+             PreparedStatement statement = conn.prepareStatement(query)) {
+            statement.setString(1, etunimi);
+            statement.setString(2, sukunimi);
+
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                asiakasId = resultSet.getInt("asiakas_id");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return asiakasId;
+
     }
 
 }

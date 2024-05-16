@@ -16,7 +16,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 
 import java.sql.SQLException;
-
+import java.sql.Timestamp;
+import java.time.LocalDate;
 
 
 public class Kayttoliittyma extends Application {
@@ -36,6 +37,9 @@ public class Kayttoliittyma extends Application {
 
     private TableView<Mokki> mokkiTableView = new TableView<>();
     private ComboBox<String> alueComboBox = new ComboBox<>();
+    private ComboBox<String> asiakasCombo = new ComboBox<>();
+    private ComboBox<String> mokkiBox = new ComboBox<>();
+
 
     @Override
     public void start(Stage primaryStage) {
@@ -59,8 +63,11 @@ public class Kayttoliittyma extends Application {
 
         //Varausten hallinta ikkuna
         varaustenHallinta.setOnAction(e -> {
-            //primaryStage.close();
-            katsoVaraukset();
+            try {
+                katsoVaraukset();
+            } catch (ClassNotFoundException ex) {
+                throw new RuntimeException(ex);
+            }
         });
 
         //Mokkien hallinta ikkua
@@ -127,7 +134,7 @@ public class Kayttoliittyma extends Application {
     }
 
     public void asiakkaidenHallintaIkkuna() throws ClassNotFoundException {
-        Asiakas asiakas = new Asiakas();
+        Asiakas uusiasiakas = new Asiakas();
 
         // Luo uusi Borderpane ja textarea
         BorderPane pane = new BorderPane();
@@ -135,7 +142,7 @@ public class Kayttoliittyma extends Application {
         tiedot.setEditable(false);
         tiedot.setFont(Font.font(15));
 
-        ListView<String> asiakasLista = new ListView<>(asiakas.asiakas.get());
+        ListView<String> asiakasLista = new ListView<>(uusiasiakas.asiakas.get());
 
         // Luo uusi Stage-olio
         Stage asiakasHallinta = new Stage();
@@ -205,36 +212,38 @@ public class Kayttoliittyma extends Application {
             lisaaAsiakasPane.add(tallennaAsiakas, 1, 7);
 
             tallennaAsiakas.setOnAction(a -> {
+                String enimi = etunimi.getText().trim();
+                String sNimi = sukunimi.getText().trim();
 
-                asiakas.kirjoitaPostiTiedot(postinumero.getText(), postitoimipaikka.getText());
+                uusiasiakas.kirjoitaPostiTiedot(postinumero.getText(), postitoimipaikka.getText());
 
-                asiakas.kirjoitaAsiakasTiedot(postinumero.getText(), etunimi.getText(), sukunimi.getText(),
+                uusiasiakas.kirjoitaAsiakasTiedot(postinumero.getText(), enimi, sNimi,
                         lahiosoite.getText(), sahkoposti.getText(), puhelinnumero.getText());
 
-                Platform.runLater(() -> {
-                    asiakasLista.setItems(asiakas.asiakas.get());
-                });
-
-                asiakasHallinta.show();
+                uusiasiakas.paivitaAsiakasLista();
                 lisaaAsiakasStage.close();
-
             });
+
             lisaaAsiakasPane.setAlignment(Pos.CENTER);
             lisaaAsiakasStage.setTitle("Lisää asiakas");
         });
 
         poistaAsiakas.setOnAction(p -> {
-
             String nimi = asiakasLista.getSelectionModel().getSelectedItem();
-
             String[] nimiOsat = nimi.split(" ");
-            String etunimi = nimiOsat[0];
-            String sukunimi = nimiOsat[1];
 
-            asiakas.poistaAsiakas(etunimi, sukunimi);
+                if (nimiOsat.length >= 2) { // Varmista, että nimi voidaan jakaa etu- ja sukunimeksi
+                    String etunimi = nimiOsat[0];
+                    String sukunimi = nimiOsat[1];
 
-            asiakasLista.getItems().remove(nimi);
+                    uusiasiakas.poistaAsiakas(etunimi, sukunimi);
+                    asiakasLista.getItems().remove(nimi);
+                } else {
+                    System.out.println("Nimeä ei voi jakaa etu- ja sukunimeksi");
+                }
         });
+
+
 
         tarkistaTiedot.setOnAction(t -> {
             String valittu = asiakasLista.getSelectionModel().getSelectedItem();
@@ -243,7 +252,7 @@ public class Kayttoliittyma extends Application {
             String etunimi = nimiOsat[0];
             String sukunimi = nimiOsat[1];
 
-            tiedot.setText(asiakas.haeTiedot(etunimi, sukunimi).getText());
+            tiedot.setText(uusiasiakas.haeTiedot(etunimi, sukunimi).getText());
 
         });
     }
@@ -375,28 +384,41 @@ public class Kayttoliittyma extends Application {
      *
      * @param parentstage
      */
-    public void teeVarausIkkuna(Stage parentstage) {
+    public void teeVarausIkkuna(Stage parentstage) throws ClassNotFoundException {
+        Asiakas nimet = new Asiakas();
+        Mokki mokkinimi = new Mokki();
+        asiakasCombo.setItems(nimet.haeAsiakasNimet());
+        mokkiBox.setItems(mokkinimi.haeMokinNimet());
+        VarausikkunaSql varaa = new VarausikkunaSql();
+        LaskujenHallinta lasku = new LaskujenHallinta();
+
         GridPane varauspane = new GridPane();
         varauspane.setVgap(10);
         varauspane.setPadding(new Insets(10));
 
-        TextField tf1 = new TextField();
-        TextField tf2 = new TextField();
+        TextField nimi = new TextField();
+        TextField mokki = new TextField();
 
         Button vahvista = new Button("Vahvista varaus");
 
         DatePicker startDatePicker = new DatePicker();
         DatePicker endDatePicker = new DatePicker();
+        DatePicker varattuPvm = new DatePicker();
+        DatePicker vahvistus = new DatePicker();
 
         varauspane.add(new Label("Nimi: "), 0, 0);
         varauspane.add(new Label("Mökki: "), 0, 1);
         varauspane.add(new Label("Aloitus pvm: "), 0, 2);
         varauspane.add(new Label("Lopetus pvm: "), 0, 3);
-        varauspane.add(tf1, 1, 0);
-        varauspane.add(tf2, 1, 1);
+        varauspane.add(new Label("varattu"), 0, 4);
+        varauspane.add(new Label("vahvistus"), 0, 5);
+        varauspane.add(asiakasCombo, 1, 0);
+        varauspane.add(mokkiBox, 1, 1);
         varauspane.add(startDatePicker, 1, 2);
         varauspane.add(endDatePicker, 1, 3);
-        varauspane.add(vahvista, 0, 4);
+        varauspane.add(varattuPvm, 1, 4);
+        varauspane.add(vahvistus,1,5);
+        varauspane.add(vahvista, 0, 6);
 
 
         varauspane.setAlignment(Pos.CENTER);
@@ -409,12 +431,48 @@ public class Kayttoliittyma extends Application {
 
         vahvista.setOnAction(e -> {
 
-            Alert ilmoitus = new Alert(Alert.AlertType.CONFIRMATION);
-            ilmoitus.setContentText("KIITTI FYRKOISTA, SENKIN TYHMÄ");
-            ilmoitus.setHeaderText("TYHMÄ");
-            ilmoitus.setTitle("AHHAHHAHAHAHHAHHA");
-            ilmoitus.show();
-            varaaStage.close();
+            // Hanki valittu asiakas
+            String valittuAsiakasNimi = asiakasCombo.getValue();
+
+            String[] nimiOsat = valittuAsiakasNimi.split(" ");
+            String etunimi = nimiOsat[0];
+            String sukunimi = nimiOsat[1];
+
+            // Hanki valittu mökki
+            String valittuMokinNimi = mokkiBox.getValue();
+
+            // muutetaan datepicker localdate ensin
+            LocalDate startdate = startDatePicker.getValue();
+            LocalDate enddate = endDatePicker.getValue();
+            LocalDate varattudate = varattuPvm.getValue();
+            LocalDate vahvistusdate = vahvistus.getValue();
+
+            Timestamp startTimestamp = Timestamp.valueOf(startdate.atStartOfDay());
+            Timestamp endTimestamp = Timestamp.valueOf(enddate.atStartOfDay());
+            Timestamp varattuTimestamp = Timestamp.valueOf(varattudate.atStartOfDay());
+            Timestamp vahvistusTimestamp = Timestamp.valueOf(vahvistusdate.atStartOfDay());
+
+            // Tarkista, että asiakas ja mökki on valittu
+            if (valittuAsiakasNimi != null && valittuMokinNimi != null) {
+                // Hanki asiakkaan ja mökin ID:t
+                int asiakasId = nimet.haeAsiakasIdNimella(etunimi, sukunimi);
+                int mokkiId = mokkinimi.haeMokkiIdNimella(valittuMokinNimi);
+
+                double summa = lasku.haeMokinHinta(mokkiId);
+
+                // Tarkista, että asiakas ja mökki löytyivät tietokannasta
+                if (asiakasId != -1 && mokkiId != -1) {
+                    // Kutsu metodia, joka lisää varauksen tietokantaan annetuilla tiedoilla
+                    varaa.lisaaVarausTietokantaan(asiakasId, mokkiId, varattuTimestamp, vahvistusTimestamp,
+                            startTimestamp, endTimestamp);
+                    //lasku.luoLasku(etunimi, sukunimi, summa);
+                } else {
+                    System.out.println("Asiakasta tai mökkiä ei löytynyt tietokannasta.");
+                }
+            } else {
+                System.out.println("Valitse asiakas ja mökki ennen varauksen vahvistamista.");
+            }
+
 
         });
 
@@ -427,20 +485,27 @@ public class Kayttoliittyma extends Application {
      *
      * @author Eljas
      */
-    public void katsoVaraukset() {
+    public void katsoVaraukset() throws ClassNotFoundException {
+        Asiakas asiakasnimi = new Asiakas();
+        VarausikkunaSql varauksia = new VarausikkunaSql();
+        LaskujenHallinta laskuja = new LaskujenHallinta();
+        Mokki mokki = new Mokki();
         BorderPane paneeli = new BorderPane();
         TextArea tiedot = new TextArea();
+        tiedot.setEditable(false);
         ListView<String> lista = new ListView<>();
+        lista.setItems(varauksia.varaus.get());
 
         VBox vbox = new VBox(15);
         vbox.setPadding(new Insets(15, 15, 15, 15));
 
         Button poistavaraus = new Button("poista varaus");
-        Button muokkaavarausta = new Button("muokkaa varausta");
+        Button tarkistaTiedot = new Button("tarkista tiedot");
         Button teevaraus = new Button("tee varaus");
+        Button luolasku = new Button("luo lasku");
 
 
-        vbox.getChildren().addAll(teevaraus, poistavaraus, muokkaavarausta);
+        vbox.getChildren().addAll(teevaraus, poistavaraus, tarkistaTiedot, luolasku);
 
         paneeli.setRight(vbox);
         paneeli.setLeft(lista);
@@ -454,10 +519,45 @@ public class Kayttoliittyma extends Application {
         varausStage.setTitle("Varausten hallinta");
 
         teevaraus.setOnAction(e -> {
-            teeVarausIkkuna(varausStage);
+            try {
+                teeVarausIkkuna(varausStage);
+            } catch (ClassNotFoundException ex) {
+                throw new RuntimeException(ex);
+            }
         });
-    }
 
+        tarkistaTiedot.setOnAction(t ->{
+
+            String valittuAsiakasNimi = lista.getSelectionModel().getSelectedItem();
+
+            String[] nimiOsat = valittuAsiakasNimi.split(" ");
+
+            String etunimi = nimiOsat[0];
+            String sukunimi = nimiOsat[1];
+
+            int id = varauksia.haeVarausId(etunimi, sukunimi);
+
+            tiedot.setText(varauksia.haeVarauksenTiedot(id).getText());
+        });
+
+        /*luolasku.setOnAction(l -> {
+            String valittu = lista.getSelectionModel().getSelectedItem();
+
+            String[] nimiOsat = valittu.split(" ");
+
+            String etunimi = nimiOsat[0];
+            String sukunimi = nimiOsat[1];
+
+            int varausId = varauksia.haeVarausId(etunimi, sukunimi);
+            double summa = laskuja.haeMokinHinta(mokki.haeMokkiIdNimella(mokkiBox.getValue()));
+            double alv;
+            int i = 0;
+
+            laskuja.LaskuTauluun(i++,varausId, summa*1.24,false ,summa);
+        });*/
+
+
+    }
     /**
      * Mökkien hallinta stage ja sen ominaisuudet/toiminnot
      */
@@ -507,6 +607,8 @@ public class Kayttoliittyma extends Application {
             for (Alue alue : alueet) {
                 alueComboBox.getItems().add(alue.getNimi());
             }
+
+
 
 
             // Aseta TableView BorderPaneen
@@ -596,6 +698,7 @@ public class Kayttoliittyma extends Application {
 
                             // Lisää Mokki tietokantaan
                             Mokki.lisaaMokkiTietokantaan(connection, uusiMokki);
+
 
                             // Päivitä TableView hakeaksesi uudet tiedot tietokannasta
                             mokkiTableView.setItems(Mokki.haeMokitTietokannasta(connection));lisaaMokkiStage.close();

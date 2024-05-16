@@ -6,20 +6,28 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.control.TextArea;
+
 
 import java.sql.*;
 
 public class Mokki {
 
-    private final String postinro;
-    private final String mokkinimi;
-    private final String katuosoite;
-    private final double hinta;
-    private final String kuvaus;
-    private final int henkilomaara;
-    private final String varustelu;
+    private static final String JDBC_URL = "jdbc:mysql://localhost:3306/vn";
+    private static final String USER = "root";
+    private static final String PASSWORD = "KISSAmies5";
+
+    private  String postinro;
+    private  String mokkinimi;
+    private  String katuosoite;
+    private  double hinta;
+    private  String kuvaus;
+    private  int henkilomaara;
+    private  String varustelu;
     private String alue;
+
+    public Mokki (){
+
+    }
 
     public Mokki(String postinro, String mokkinimi, String katuosoite, double hinta,
                  String kuvaus, int henkilomaara, String varustelu, String alue) {
@@ -141,6 +149,7 @@ public class Mokki {
 
     public static ObservableList<Mokki> haeMokitTietokannasta(Connection connection) throws SQLException {
         ObservableList<Mokki> mokit = FXCollections.observableArrayList();
+
         Statement statement = connection.createStatement();
         ResultSet resultSet = statement.executeQuery("SELECT mokki.*, alue.nimi AS alue FROM mokki INNER JOIN alue ON mokki.alue_id = alue.alue_id");
         while (resultSet.next()) {
@@ -157,6 +166,7 @@ public class Mokki {
             mokit.add(mokki);
         }
         return mokit;
+
     }
 
     public static void poistaMokkiTietokannasta(Connection connection, String postinro) throws SQLException {
@@ -176,6 +186,47 @@ public class Mokki {
             e.printStackTrace();
         }
     }
+
+    public ObservableList<String> haeMokinNimet() {
+        ObservableList<String> mokinNimet = FXCollections.observableArrayList();
+
+        try (Connection conn = DriverManager.getConnection(JDBC_URL, USER, PASSWORD)) {
+            Statement statement = conn.createStatement();
+            ResultSet resultSet = statement.executeQuery("SELECT mokkinimi FROM mokki");
+
+            while (resultSet.next()) {
+                String mokkinimi = resultSet.getString("mokkinimi");
+                mokinNimet.add(mokkinimi);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return mokinNimet;
+    }
+
+
+    public int haeMokkiIdNimella(String mokkinimi) {
+        int mokkiId = -1; // Oletuksena -1, jos mökkiä ei löydy
+
+        try (Connection conn = DriverManager.getConnection(JDBC_URL, USER, PASSWORD)) {
+            String query = "SELECT mokki_id FROM mokki WHERE mokkinimi = ?";
+            PreparedStatement statement = conn.prepareStatement(query);
+            statement.setString(1, mokkinimi);
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                mokkiId = resultSet.getInt("mokki_id");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return mokkiId;
+    }
+
+
+
 
 
 }
