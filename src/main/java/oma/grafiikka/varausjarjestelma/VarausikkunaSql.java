@@ -135,6 +135,22 @@ public class VarausikkunaSql {
         return varaustiedot;
     }
 
+    public void poistaVaraus(int varaus_id) {
+        String query = "DELETE FROM varaus WHERE varaus_id = ?";
 
+        try (Connection conn = DriverManager.getConnection(JDBC_URL, USER, PASSWORD);
+             PreparedStatement statement = conn.prepareStatement(query)) {
+            statement.setInt(1, varaus_id);
+
+            int rowsDeleted = statement.executeUpdate();
+            if (rowsDeleted > 0) {
+                System.out.println("Varaus poistettiin onnistuneesti.");
+            } else {
+                System.out.println("Varauksen poistaminen epäonnistui, varaus_id:llä " + varaus_id + " ei löytynyt.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 
 }

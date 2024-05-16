@@ -211,24 +211,6 @@ public class Asiakas {
         return asiakasNimet;
     }
 
-    public ObservableList<String> haeMokinNimet() {
-        ObservableList<String> mokinNimet = FXCollections.observableArrayList();
-
-        try (Connection conn = DriverManager.getConnection(JDBC_URL, USER, PASSWORD)) {
-            Statement statement = conn.createStatement();
-            ResultSet resultSet = statement.executeQuery("SELECT mokkinimi FROM mokki");
-
-            while (resultSet.next()) {
-                String mokkinimi = resultSet.getString("mokkinimi");
-                mokinNimet.add(mokkinimi);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return mokinNimet;
-    }
-
 
     public int haeAsiakasIdNimella(String etunimi, String sukunimi) {
         int asiakasId = -1; // Oletusarvo, jos asiakasta ei löydy

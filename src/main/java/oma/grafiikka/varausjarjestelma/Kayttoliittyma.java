@@ -518,6 +518,20 @@ public class Kayttoliittyma extends Application {
         varausStage.show();
         varausStage.setTitle("Varausten hallinta");
 
+        poistavaraus.setOnAction(p -> {
+            String valittuAsiakasNimi = lista.getSelectionModel().getSelectedItem();
+
+            String[] nimiOsat = valittuAsiakasNimi.split(" ");
+
+            String etunimi = nimiOsat[0];
+            String sukunimi = nimiOsat[1];
+
+            int id = varauksia.haeVarausId(etunimi, sukunimi);
+
+            varauksia.poistaVaraus(id);
+            lista.getItems().remove(valittuAsiakasNimi);
+        });
+
         teevaraus.setOnAction(e -> {
             try {
                 teeVarausIkkuna(varausStage);
